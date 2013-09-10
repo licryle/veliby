@@ -1,13 +1,41 @@
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     xmlns:map="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
     android:paddingBottom="@dimen/activity_vertical_margin"
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context=".MapsActivity" >
+
+    <LinearLayout
+          android:layout_width="match_parent"
+          android:layout_height="wrap_content"
+          android:orientation="horizontal">
+
+          <ImageButton
+              android:id="@+id/refresh"
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content"
+              android:background="@null"
+              android:contentDescription="@string/refresh"
+              android:gravity="center_vertical|left"
+              android:src="@drawable/ic_menu_refresh" />
+
+          <TextView android:id="@+id/refresh_date"
+                android:layout_width="wrap_content"
+                android:layout_height="fill_parent"
+                android:gravity="center"
+                android:text="@string/refresh_date"/>
+
+          <Spinner
+              android:id="@+id/color_mode"
+              android:layout_width="wrap_content"
+              android:layout_height="fill_parent"
+              android:gravity="center|right" />
+    </LinearLayout>
 
     <fragment
           android:id="@+id/map"
@@ -15,7 +43,7 @@
           android:layout_height="match_parent"
           android:name="com.google.android.gms.maps.SupportMapFragment"
           class="com.google.android.gms.maps.SupportMapFragment"
-          map:cameraBearing="112.5"
+          map:cameraBearing="0"
           map:cameraTargetLat="48.85568"
           map:cameraTargetLng="2.346246"
           map:cameraTilt="0"
@@ -28,4 +56,4 @@
           map:uiZoomControls="false"
           map:uiZoomGestures="true" />
 
-</RelativeLayout>
+</LinearLayout>
