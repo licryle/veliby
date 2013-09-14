@@ -9,6 +9,7 @@
     
     <string name="infoview_bonus">Bonus de 15 minutes ajouté à votre compte lors du dépot d\'un vélo dans cette station!</string>
     <string name="infoview_bank">Station disposant d\'une borne achat de ticket/rechargement de forfaits.</string>
+    <string name="infoview_stationclosed">Station fermée!</string>
     
     <string-array name="color_mode_array">
         <item>Trouver un vélo</item>

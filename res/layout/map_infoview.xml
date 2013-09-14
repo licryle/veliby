@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/map_infoview"
+    android:id="@+id/infoview_map"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:orientation="vertical" >
@@ -18,8 +18,20 @@
         android:textSize="@dimen/infoview_title"
         android:textStyle="bold" />
 
+    <TextView
+        android:id="@+id/infoview_stationclosed"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:text="@string/infoview_stationclosed"
+        android:textSize="@dimen/infoview_title"
+        android:textColor="#FFFF0000"
+        android:textStyle="bold|italic" />
+
     <LinearLayout
-        android:id="@+id/map_infoview_bikeimg"
+        android:id="@+id/infoview_row_bikeimg"
 		    android:layout_width="match_parent"
 		    android:layout_height="wrap_content"
 		    android:orientation="horizontal" >
@@ -45,7 +57,7 @@
     </LinearLayout>
 
     <LinearLayout
-        android:id="@+id/map_infoview_bike"
+        android:id="@+id/infoview_row_bike"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal" >
@@ -72,7 +84,7 @@
     </LinearLayout>
 
     <LinearLayout
-        android:id="@+id/map_infoview_row_bonus"
+        android:id="@+id/infoview_row_bonus"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp" >
@@ -96,7 +108,7 @@
     </LinearLayout>
 
     <LinearLayout
-        android:id="@+id/map_infoview_row_bank"
+        android:id="@+id/infoview_row_bank"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"

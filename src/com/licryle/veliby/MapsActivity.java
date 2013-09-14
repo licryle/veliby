@@ -274,7 +274,7 @@ public class MapsActivity extends FragmentActivity
 			mTitle.setText(mStation.getName());
 
 			// Take
-			int iNbBikes = mStation.getAvailableBikes();
+			int iNbBikes = mStation.isOpened() ? mStation.getAvailableBikes() : 0;
 
 			TextView mBikes = (TextView) mInfoView.findViewById(R.id.infoview_bikes);
 			mBikes.setText("" + iNbBikes);
@@ -303,7 +303,7 @@ public class MapsActivity extends FragmentActivity
 			mBikes.setTextColor(color);
 
 			// Return
-			iNbBikes = mStation.getAvailableBikeStands();
+		  iNbBikes = mStation.isOpened() ? mStation.getAvailableBikeStands() : 0;
 
 			mBikes = (TextView) mInfoView.findViewById(R.id.infoview_stands);
 			mBikes.setText("" + iNbBikes);
@@ -331,13 +331,16 @@ public class MapsActivity extends FragmentActivity
 			mBikes.setTextColor(color);
 
 			int iVisibility = mStation.hasBonus() ? View.VISIBLE : View.GONE;
-			mInfoView.findViewById(R.id.map_infoview_row_bonus).
+			mInfoView.findViewById(R.id.infoview_row_bonus).
 					setVisibility(iVisibility);
 
 			iVisibility = mStation.hasBanking() ? View.VISIBLE : View.GONE;
-			mInfoView.findViewById(R.id.map_infoview_row_bank).
+			mInfoView.findViewById(R.id.infoview_row_bank).
 					setVisibility(iVisibility);
 
+			iVisibility = mStation.isOpened() ? View.GONE : View.VISIBLE;
+			mInfoView.findViewById(R.id.infoview_stationclosed).
+					setVisibility(iVisibility);
 			return mInfoView;
     }
 
