@@ -30,21 +30,29 @@ import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.ArrayAdapter;
 import android.widget.ImageButton;
+import android.widget.LinearLayout;
 import android.widget.Spinner;
+import android.widget.TableRow;
 import android.widget.TextView;
 
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.GoogleMap.InfoWindowAdapter;
+import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 public class MapsActivity extends FragmentActivity
-		implements OnItemSelectedListener, View.OnClickListener {
+		implements OnItemSelectedListener, View.OnClickListener,
+							 InfoWindowAdapter {
 	private GoogleMap mMap;
+	private View mInfoView;
+
   protected String sFileStations = null;
   protected Hashtable<Integer, Station> mStations = null;
 
@@ -103,7 +111,8 @@ public class MapsActivity extends FragmentActivity
     	sFileStations = appDir.getAbsolutePath() +
 					"/com.licryle.veliby.stations.status";
 
-    	intent.putExtra("url", "https://api.jcdecaux.com/vls/v1/stations?contract=Paris&apiKey=718b4e0e0b1f01af842ff54c38bed00eaa63ce3c");
+    	intent.putExtra("url", "https://api.jcdecaux.com/vls/v1/stations?" +
+    			"contract=Paris&apiKey=718b4e0e0b1f01af842ff54c38bed00eaa63ce3c");
     	intent.putExtra("tempFile", sFileStations);
     	intent.putExtra("receiver", new DownloadReceiver(new Handler()));
     	startService(intent);
@@ -115,7 +124,8 @@ public class MapsActivity extends FragmentActivity
         return true;
     }*/
 
-    protected void alertBox(String title, String mymessage, OnClickListener onclick) {
+    protected void alertBox(String title, String mymessage,
+    		OnClickListener onclick) {
       new AlertDialog.Builder(this)
       			.setMessage(mymessage)
       			.setTitle(title)
@@ -125,7 +135,6 @@ public class MapsActivity extends FragmentActivity
     }
 
     private boolean setUpMapIfNeeded() {
-        // Do a null check to confirm that we have not already instantiated the map.-
         if (mMap == null) {
             mMap = ((SupportMapFragment) getSupportFragmentManager().
            		     findFragmentById(R.id.map)).getMap();
@@ -133,8 +142,13 @@ public class MapsActivity extends FragmentActivity
             if (mMap == null) return false;
 
             mMap.setMyLocationEnabled(true);
+            mMap.setInfoWindowAdapter(this);
 
-            LocationManager lm = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
+            mInfoView = getLayoutInflater().inflate(R.layout.map_infoview,
+            																			  null);
+
+            LocationManager lm = (LocationManager) getSystemService(
+            		Context.LOCATION_SERVICE);
             Criteria crit = new Criteria();
             crit.setAccuracy(Criteria.ACCURACY_FINE);
             String provider = lm.getBestProvider(crit, true);
@@ -161,7 +175,8 @@ public class MapsActivity extends FragmentActivity
       protected void onReceiveResult(int resultCode, Bundle resultData) {
         super.onReceiveResult(resultCode, resultData);
         if (resultCode == DownloadService.SUCCESS) {
-          mStations = (Hashtable<Integer, Station>) resultData.getSerializable("stations");
+          mStations = (Hashtable<Integer, Station>) resultData.
+          		getSerializable("stations");
 
           TextView mText = (TextView) findViewById(R.id.refresh_date);
           mText.setText("Mis à jour: " +
@@ -176,13 +191,6 @@ public class MapsActivity extends FragmentActivity
 
     protected void addMarkers(boolean bReturnBike) {
     	if (mStations == null) return;
-
-    	ProgressDialog mProgress = ProgressDialog.show(this, "Rafraichissement", "Mise à jour du plan en cours",false);
-    	mProgress.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-    	mProgress.setMax(mStations.size());
-    	mProgress.show();
-    	int iProgress = 0;
-    	mProgress.setProgress(iProgress);
     	
       mMap.clear();
       Iterator<Map.Entry<Integer, Station>> it = mStations.entrySet().iterator();
@@ -192,21 +200,19 @@ public class MapsActivity extends FragmentActivity
       	Station mStation = entry.getValue();
 
       	MarkerOptions mOpts = new MarkerOptions();
-      	mOpts.position(mStation.Position());
-      	mOpts.title(mStation.Name());
-      	mOpts.snippet("Status: " + (mStation.isOpened()?"OPEN":"CLOSE") +
-      								" Bikes: " + mStation.AvailableBikes() + " " +
-      								" Return: " + mStation.AvailableBikeStands() + " " +
-      								"Bonus: " + mStation.hasBonus() + " " +
-      								"Address: " + mStation.Address());
+      	mOpts.position(mStation.getPosition());
+      	mOpts.title(mStation.getName());
+      	
+      	int id = mStation.getId();
+      	mOpts.snippet(String.valueOf(id));
 
       	int iIcon;
 				if (! mStation.isOpened()) {
       		iIcon = R.drawable.presence_offline;
       	} else {
         	int iBikes = (bReturnBike) ?
-        			 mStation.AvailableBikeStands() :
-        			 mStation.AvailableBikes();
+        			 mStation.getAvailableBikeStands() :
+        			 mStation.getAvailableBikes();
 
         	switch (iBikes) {
       			case 0:
@@ -231,14 +237,10 @@ public class MapsActivity extends FragmentActivity
       		
       	mOpts.icon(BitmapDescriptorFactory.fromResource(iIcon));
       	mMap.addMarker(mOpts);
-
-      	mProgress.setProgress(++iProgress);
       }
 
       ImageButton mButton = (ImageButton) findViewById(R.id.refresh);
       mButton.setClickable(true);
- 
-      mProgress.dismiss();
     }
 
 		@Override
@@ -260,5 +262,88 @@ public class MapsActivity extends FragmentActivity
 					downloadMarkers();
 				break;
 			}
+    }
+
+		@Override
+    public View getInfoContents(Marker marker) {
+			String sStationId = marker.getSnippet();
+			Station mStation = mStations.get(Integer.valueOf(sStationId));
+
+			// Title
+			TextView mTitle = (TextView) mInfoView.findViewById(R.id.infoview_title);
+			mTitle.setText(mStation.getName());
+
+			// Take
+			int iNbBikes = mStation.getAvailableBikes();
+
+			TextView mBikes = (TextView) mInfoView.findViewById(R.id.infoview_bikes);
+			mBikes.setText("" + iNbBikes);
+
+			int color;
+			switch (iNbBikes) {
+				case 0:
+					color = getResources().getColor(R.color.infoview_nobike);
+				break;
+	
+				case 1:
+				case 2:
+					color = getResources().getColor(R.color.infoview_fewbikes);
+				break;
+	
+				case 3:
+				case 4:
+				case 5:
+					color = getResources().getColor(R.color.infoview_somebikes);
+				break;
+	
+				default:
+					color = getResources().getColor(R.color.infoview_plentybikes);
+			}
+
+			mBikes.setTextColor(color);
+
+			// Return
+			iNbBikes = mStation.getAvailableBikeStands();
+
+			mBikes = (TextView) mInfoView.findViewById(R.id.infoview_stands);
+			mBikes.setText("" + iNbBikes);
+
+			switch (iNbBikes) {
+				case 0:
+					color = getResources().getColor(R.color.infoview_nobike);
+				break;
+	
+				case 1:
+				case 2:
+					color = getResources().getColor(R.color.infoview_fewbikes);
+				break;
+	
+				case 3:
+				case 4:
+				case 5:
+					color = getResources().getColor(R.color.infoview_somebikes);
+				break;
+	
+				default:
+					color = getResources().getColor(R.color.infoview_plentybikes);
+			}
+
+			mBikes.setTextColor(color);
+
+			int iVisibility = mStation.hasBonus() ? View.VISIBLE : View.GONE;
+			mInfoView.findViewById(R.id.map_infoview_row_bonus).
+					setVisibility(iVisibility);
+
+			iVisibility = mStation.hasBanking() ? View.VISIBLE : View.GONE;
+			mInfoView.findViewById(R.id.map_infoview_row_bank).
+					setVisibility(iVisibility);
+
+			return mInfoView;
+    }
+
+		@Override
+    public View getInfoWindow(Marker marker) {
+	    // TODO Auto-generated method stub
+	    return null;
     }
 }

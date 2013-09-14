@@ -19,12 +19,12 @@ public class Station {
 			this._sName = sName;
 		}
 
-		private int Id() { return _iId; }
-		private String Name() { return _sName; }
+		private int getId() { return _iId; }
+		private String getName() { return _sName; }
 
 		public static Contract findContractByName(String sName) {
 			for (Contract c: Contract.values()) {
-				if (c.Name().equalsIgnoreCase(sName) ) {
+				if (c.getName().equalsIgnoreCase(sName) ) {
 					return c;
 				}
 			}
@@ -54,7 +54,7 @@ public class Station {
 	public Station(JSONObject mStation) throws JSONException {
 		_iNumber = mStation.getInt("number");
 		_iContract = Contract.findContractByName(mStation.getString("contract_name"));
-		_iId = _iContract.Id() * 10000000 + _iNumber;
+		_iId = _iContract.getId() * 10000000 + _iNumber;
 
 		_sName = mStation.getString("name");
 		_sAddress = mStation.getString("address");
@@ -73,17 +73,17 @@ public class Station {
 		_mLastUpdate = new Date(mStation.getLong("last_update"));
 	}
 
-	public int Number() { return _iNumber; }
-	public Contract Contract() { return _iContract; }
-	public int Id() { return _iId; }
-	public String Name() { return _sName; }
-	public String Address() { return _sAddress; }
-	public LatLng Position() { return _mPos; }
+	public int getNumber() { return _iNumber; }
+	public Contract getContract() { return _iContract; }
+	public int getId() { return _iId; }
+	public String getName() { return _sName; }
+	public String getAddress() { return _sAddress; }
+	public LatLng getPosition() { return _mPos; }
 	public boolean hasBanking() { return _bBanking; }
 	public boolean hasBonus() { return _bBonus; }
 
 	public boolean isOpened() { return _bOpened; }
-	public int AvailableBikes() { return _iAvBikes; }
-	public int AvailableBikeStands() { return _iAvBikeStands; }
-	public Date LastUpdate() { return _mLastUpdate; }
+	public int getAvailableBikes() { return _iAvBikes; }
+	public int getAvailableBikeStands() { return _iAvBikeStands; }
+	public Date getLastUpdate() { return _mLastUpdate; }
 }

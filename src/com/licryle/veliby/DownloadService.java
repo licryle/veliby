@@ -67,7 +67,7 @@ public class DownloadService extends IntentService {
       		new Hashtable<Integer, Station>();
       for (int i=0; i < mJSon.length(); i++) {
       	Station mStation = new Station(mJSon.getJSONObject(i));
-      	mNewStations.put(mStation.Id(), mStation);
+      	mNewStations.put(mStation.getId(), mStation);
       }
 
       Bundle resultData = new Bundle();

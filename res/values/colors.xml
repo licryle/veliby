@@ -1,5 +1,9 @@
 <resources>
 
     <color name="black_overlay">#66000000</color>
+    <color name="infoview_nobike">#FF919191</color>
+    <color name="infoview_fewbikes">#FFf52626</color>
+    <color name="infoview_somebikes">#FFff8a05</color>
+    <color name="infoview_plentybikes">#FF99cc00</color>
 
 </resources>
