@@ -4,11 +4,15 @@
     <string name="app_name">Veliby</string>
     <string name="action_settings">Settings</string>
 
+    <string name="welcome_ok">Compris!</string>
+
     <string name="refresh">Mettre à jour</string>
     <string name="refresh_date">Jamais mis à jour</string>
     
-    <string name="infoview_bonus">Bonus de 15 minutes ajouté à votre compte lors du dépot d\'un vélo dans cette station!</string>
-    <string name="infoview_bank">Station disposant d\'une borne achat de ticket/rechargement de forfaits.</string>
+    <string name="infoview_bonus">Bonus de 15 minutes ajouté à votre compte
+        lors du dépot d\'un vélo dans cette station!</string>
+    <string name="infoview_bank">Station disposant d\'une borne achat de 
+        ticket/rechargement de forfaits.</string>
     <string name="infoview_stationclosed">Station fermée!</string>
     
     <string-array name="color_mode_array">

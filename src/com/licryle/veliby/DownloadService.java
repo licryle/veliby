@@ -2,10 +2,8 @@ package com.licryle.veliby;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.Hashtable;
@@ -28,7 +26,8 @@ public class DownloadService extends IntentService {
   @Override
   protected void onHandleIntent(Intent intent) {
     String urlToDownload = intent.getStringExtra("url");
-    ResultReceiver receiver = (ResultReceiver) intent.getParcelableExtra("receiver");
+    ResultReceiver receiver = (ResultReceiver) intent.
+    		getParcelableExtra("receiver");
 
     try {
       URL url = new URL(urlToDownload);
