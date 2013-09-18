@@ -10,33 +10,6 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context=".MapsActivity" >
 
-    <LinearLayout
-          android:layout_width="match_parent"
-          android:layout_height="wrap_content"
-          android:orientation="horizontal">
-
-          <ImageButton
-              android:id="@+id/refresh"
-              android:layout_width="wrap_content"
-              android:layout_height="wrap_content"
-              android:background="@null"
-              android:contentDescription="@string/refresh"
-              android:gravity="center_vertical|left"
-              android:src="@drawable/ic_menu_refresh" />
-
-          <TextView android:id="@+id/refresh_date"
-                android:layout_width="wrap_content"
-                android:layout_height="fill_parent"
-                android:gravity="center"
-                android:text="@string/refresh_date"/>
-
-          <Spinner
-              android:id="@+id/color_mode"
-              android:layout_width="wrap_content"
-              android:layout_height="fill_parent"
-              android:gravity="center|right" />
-    </LinearLayout>
-
     <fragment
           android:id="@+id/map"
           android:layout_width="match_parent"

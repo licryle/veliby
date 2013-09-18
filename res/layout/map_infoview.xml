@@ -52,7 +52,7 @@
             android:layout_gravity="center"
             android:layout_weight="1"
             android:contentDescription="@string/refresh"
-            android:src="@drawable/stat_sys_download_anim5" />
+            android:src="@drawable/ic_menu_goto" />
 
     </LinearLayout>
 

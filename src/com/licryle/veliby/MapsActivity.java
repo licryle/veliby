@@ -11,6 +11,7 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationManager;
@@ -18,7 +19,11 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.ResultReceiver;
-import android.support.v4.app.FragmentActivity;
+import android.support.v7.app.ActionBarActivity;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemSelectedListener;
@@ -26,6 +31,7 @@ import android.widget.ArrayAdapter;
 import android.widget.ImageButton;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -37,13 +43,13 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.licryle.veliby.UI.Maps_InfoWindowAdapter;
 
-public class MapsActivity extends FragmentActivity
-		implements OnItemSelectedListener, View.OnClickListener {
+public class MapsActivity extends ActionBarActivity {
 	private GoogleMap mMap;
 
   protected String sFileStations = null;
   protected Hashtable<Integer, Station> mStations;
-
+  protected boolean	bModeFindBike = true;
+  protected boolean	bDownloading = false;
 
 	protected static Hashtable<Integer, Integer> mBikeResources = 
 			new Hashtable<Integer, Integer>() {{
@@ -54,48 +60,96 @@ public class MapsActivity extends FragmentActivity
 			}}; 
 
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-      super.onCreate(savedInstanceState);
+  @Override
+  protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
 
-      setContentView(R.layout.activity_maps);
+    setContentView(R.layout.activity_maps);
 
-      mStations = new Hashtable<Integer, Station>();
-      // ToDo: load static info from file
+    mStations = new Hashtable<Integer, Station>();
+    // ToDo: load static info from file
 
-      setupControls();
-      setupMap();
+    setupMap();
 
-      downloadMarkers();
-    }
+    downloadMarkers();
 
-    @Override
-    public void onResume() {
-    	super.onResume();
-    }
+    firstStart();
+  }
+
+  @Override
+  public boolean onCreateOptionsMenu(Menu menu) {
+      // Inflate the menu items for use in the action bar
+      MenuInflater inflater = getMenuInflater();
+      inflater.inflate(R.menu.maps, menu);
+      return super.onCreateOptionsMenu(menu);
+  }
+
+  @Override
+  public boolean onOptionsItemSelected(MenuItem item) {
+    // Handle presses on the action bar items
+    switch (item.getItemId()) {
+      case R.id.action_reload:
+      	downloadMarkers();
+      return true;
+
+      case R.id.action_mode:
+      	bModeFindBike = ! bModeFindBike;
+
+      	int iIcon;
+      	int iToastStr;
+      	if (bModeFindBike) {
+      		iIcon = R.drawable.ic_menu_upload;
+      		iToastStr = R.string.action_mode_find;
+      	} else {
+      		iIcon = R.drawable.ic_menu_goto;
+      		iToastStr = R.string.action_mode_return;
+      	}
+
+      	item.setIcon(getResources().getDrawable(iIcon));
+      	lightMessage(iToastStr);
+
+        updateMarkers(bModeFindBike);
+      return true;
+
+      default:
+      return super.onOptionsItemSelected(item);
+	  }
+  }
+
+  @Override
+  public void onResume() {
+  	super.onResume();
+  	downloadMarkers();
+  }
  
-    protected void setupControls() {
-		  ((ImageButton) findViewById(R.id.refresh)).setOnClickListener(this);
-
-      Spinner spinner = (Spinner) findViewById(R.id.color_mode);
-		  // Create an ArrayAdapter using the string array and a default spinner 
-    //   layout.
-	  ArrayAdapter<CharSequence> adapter =
-	  		ArrayAdapter.createFromResource(this,
-	  																		R.array.color_mode_array,
-	  																		android.R.layout.simple_spinner_item);
-	  // Specify the layout to use when the list of choices appears
-	  adapter.setDropDownViewResource(
-	  		android.R.layout.simple_spinner_dropdown_item);
-	  // Apply the adapter to the spinner
-		  spinner.setAdapter(adapter);
-		  spinner.setOnItemSelectedListener(this);    	
-    }
+  protected void lightMessage(int iTextResource) {
+  	String sText = getResources().getString(iTextResource);
+  	Toast.makeText(getApplicationContext(), sText, Toast.LENGTH_SHORT).show();  	
+  }
  
-    protected void downloadMarkers() {
-			((ImageButton) findViewById(R.id.refresh)).setClickable(false);
-			((TextView) findViewById(R.id.refresh_date)).
-					setText("Téléchargement en cours...");
+  protected void firstStart() {
+  	SharedPreferences mSettings = getPreferences(MODE_PRIVATE);
+
+  	if (! mSettings.getBoolean("previously_started", false)) {
+  		AlertDialog.Builder builder = new AlertDialog.Builder(this);
+  		LayoutInflater inflater = getLayoutInflater();
+
+  		builder.setView(inflater.inflate(R.layout.welcome_dialog, null))
+  					 .setPositiveButton(R.string.ok, null)
+  		       .setTitle(R.string.welcome_title);
+
+  		AlertDialog dialog = builder.create();
+  		dialog.show();
+
+  		mSettings.edit().putBoolean("previously_started", true).commit();
+  	}
+  }
+
+  protected void downloadMarkers() {
+  	if (bDownloading) return;
+  	bDownloading = true;
+
+  	lightMessage(R.string.action_reload_start);
 
   	Intent intent = new Intent(this, DownloadService.class);
 
@@ -169,18 +223,14 @@ public class MapsActivity extends FragmentActivity
         	mStations.put(mStation.getKey(), mStation.getValue());
         }
 
-        TextView mText = (TextView) findViewById(R.id.refresh_date);
-        mText.setText("Mis à jour: " +
-        							DateFormat.getDateTimeInstance().format(
-        									Calendar.getInstance().getTime()));
-
-      	Spinner spinner = (Spinner) findViewById(R.id.color_mode);
-      	updateMarkers(spinner.getSelectedItemId() == 1);
+        bDownloading = false;
+      	lightMessage(R.string.action_reload_complete);
+      	updateMarkers(bModeFindBike);
       }
     }
   }
 
-  protected void updateMarkers(boolean bReturnBike) {
+  protected void updateMarkers(boolean bFindBike) {
   	if (mStations == null) return;
   	
     mMap.clear();
@@ -202,9 +252,9 @@ public class MapsActivity extends FragmentActivity
 			if (! mStation.isOpened()) {
     		iIcon = R.drawable.presence_offline;
     	} else {
-      	int iBikes = (bReturnBike) ?
-      			 mStation.getAvailableBikeStands() :
-      			 mStation.getAvailableBikes();
+      	int iBikes = (bFindBike) ?
+      			 mStation.getAvailableBikes() :
+      			 mStation.getAvailableBikeStands();
 
       	iIcon = Util.resolveResourceFromNumber(mBikeResources, iBikes);
     	}
@@ -212,29 +262,5 @@ public class MapsActivity extends FragmentActivity
     	mOpts.icon(BitmapDescriptorFactory.fromResource(iIcon));
     	mMap.addMarker(mOpts);
     }
-
-    ImageButton mButton = (ImageButton) findViewById(R.id.refresh);
-    mButton.setClickable(true);
-  }
-
-	@Override
-  public void onItemSelected(AdapterView<?> parent, View view, int position,
-      long id) {
-		updateMarkers(id == 1);
-  }
-
-	@Override
-  public void onNothingSelected(AdapterView<?> parent) {
-		((Spinner) parent).setSelection(0);    
-  }
-
-	@Override
-  public void onClick(View v) {
-    // Refresh button
-		switch(v.getId()) {
-			case R.id.refresh:
-				downloadMarkers();
-			break;
-		}
   }
 }
