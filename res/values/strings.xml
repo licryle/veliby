@@ -17,7 +17,7 @@
 Enfin, 2 boutons vous permettent de contrôler l\'app:</string>
     <string name="welcome_refresh">Permet de rafraichir les données. La mise à jour est automatique à chaque lancement/changement d\'application.</string>
     <string name="welcome_mode_find">Les couleurs indiquent le nombre de vélos. Cliquez pour alterner.</string>
-    <string name="welcome_mode_return">Les couleurs indiquent le nombre de vélos. Cliquez pour alterner.</string>
+    <string name="welcome_mode_return">Les couleurs indiquent le nombre de points d\'attache. Cliquez pour alterner.</string>
     
     <string name="action_mode">Mode d\'affichage</string>
     <string name="action_mode_find">Vélos disponibles</string>
