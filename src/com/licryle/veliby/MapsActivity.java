@@ -55,7 +55,7 @@ public class MapsActivity extends ActionBarActivity {
 			new Hashtable<Integer, Integer>() {{
 				put(0,R.drawable.presence_invisible);
 				put(2,R.drawable.presence_busy);
-				put(5,R.drawable.presence_away);
+				put(4,R.drawable.presence_away);
 				put(1000,R.drawable.presence_online);
 			}}; 
 

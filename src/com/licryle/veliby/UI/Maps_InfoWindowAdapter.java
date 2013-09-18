@@ -23,7 +23,7 @@ public class Maps_InfoWindowAdapter implements InfoWindowAdapter {
 				{
 					put(0,R.color.infoview_nobike);
 					put(2,R.color.infoview_fewbikes);
-					put(5,R.color.infoview_somebikes);
+					put(4,R.color.infoview_somebikes);
 					put(1000,R.color.infoview_plentybikes);
 				}
 			};
