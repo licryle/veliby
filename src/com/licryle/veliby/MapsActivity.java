@@ -10,6 +10,7 @@ import java.util.Map;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface.OnClickListener;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.location.Criteria;
@@ -33,6 +34,8 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -65,15 +68,16 @@ public class MapsActivity extends ActionBarActivity {
     super.onCreate(savedInstanceState);
 
     setContentView(R.layout.activity_maps);
-
     mStations = new Hashtable<Integer, Station>();
     // ToDo: load static info from file
 
     setupMap();
 
-    downloadMarkers();
+    if (hasPlayServices()) {
+    	downloadMarkers();
 
-    firstStart();
+    	firstStart();
+    }
   }
 
   @Override
@@ -172,9 +176,27 @@ public class MapsActivity extends ActionBarActivity {
     new AlertDialog.Builder(this)
     			.setMessage(mymessage)
     			.setTitle(title)
-    			.setCancelable(true)
-    			.setNeutralButton(android.R.string.cancel, onclick)
+    			.setNeutralButton(R.string.ok, onclick)
     			.show();
+  }
+
+  public void exitApp() {
+  	Intent intent = new Intent(Intent.ACTION_MAIN);
+  	intent.addCategory(Intent.CATEGORY_HOME);
+  	intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+  	startActivity(intent);
+  }
+
+  private boolean hasPlayServices() {
+  	int iStatus = GooglePlayServicesUtil.
+  			isGooglePlayServicesAvailable(getApplicationContext());
+  	if (iStatus != ConnectionResult.SUCCESS) {
+      alertBox(getResources().getString(R.string.playservice_issue_title),
+      		getResources().getString(R.string.playservice_issue_content), null);
+      return false;
+  	}
+
+  	return true;
   }
 
   private boolean setupMap() {
@@ -231,7 +253,7 @@ public class MapsActivity extends ActionBarActivity {
   }
 
   protected void updateMarkers(boolean bFindBike) {
-  	if (mStations == null) return;
+  	if (mStations == null || mMap == null) return;
   	
     mMap.clear();
     Iterator<Map.Entry<Integer, Station>> it = mStations.entrySet().

@@ -2,7 +2,11 @@
 <resources>
 
     <string name="app_name">Veliby</string>
+
     <string name="ok">D\'accord!</string>
+
+    <string name="playservice_issue_title">Aïe!</string>
+    <string name="playservice_issue_content">Il semblerait que vous ayez un problème avec les "Google Play Services". Le plan ne se chargera donc pas, mais l\'écran suivant vous invitera à vous rendre sur le Google Play Store pour mettre à jour "Google Play Services".</string>
 
     <string name="welcome_title">Bienvenue sur Véliby!</string>
     <string name="welcome_introduction">Véliby est une application simple et concise qui vous montre l\'état des stations autour de vous grâce à de simple codes couleurs:</string>
