@@ -1,13 +1,17 @@
 package com.licryle.veliby;
 
-import java.sql.Date;
+import java.io.Serializable;
+import java.util.Calendar;
+import java.util.Date;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.google.android.gms.maps.model.LatLng;
 
-public class Station {
+public class Station implements Serializable {
+  private static final long serialVersionUID = -967068502674805726L;
+
 	public enum Contract {
 		PARIS (1, "Paris");
 
@@ -31,6 +35,16 @@ public class Station {
 
 			return null;
 		}
+
+		public static Contract findContractById(int iId) {
+			for (Contract c: Contract.values()) {
+				if (c.getId() == iId) {
+					return c;
+				}
+			}
+
+			return null;
+    }
 	}
 
 	// Static data
@@ -40,7 +54,8 @@ public class Station {
 
 	protected String _sName;
 	protected String _sAddress;
-	protected LatLng _mPos;
+	protected Double _dLng;
+	protected Double _dLat;
 	protected boolean _bBanking;
 	protected boolean _bBonus;
 	protected int _iBikeStands;
@@ -51,17 +66,20 @@ public class Station {
 	protected int _iAvBikeStands;
 	protected Date _mLastUpdate;
 
+	// Shallow: only contains dynamic data
+	protected boolean _bShallow;
+
 	public Station(JSONObject mStation) throws JSONException {
 		_iNumber = mStation.getInt("number");
 		_iContract = Contract.findContractByName(mStation.getString("contract_name"));
-		_iId = _iContract.getId() * 10000000 + _iNumber;
+		_iId = _iContract.getId() * 1000000 + _iNumber;
 
 		_sName = mStation.getString("name");
 		_sAddress = mStation.getString("address");
 
 		JSONObject mPos = mStation.getJSONObject("position");
-		_mPos = new LatLng(mPos.getDouble("lat"),
-											 mPos.getDouble("lng"));
+		_dLat = mPos.getDouble("lat");
+		_dLng = mPos.getDouble("lng");
 
 		_bBanking = mStation.getBoolean("banking");
 		_bBonus = mStation.getBoolean("bonus");
@@ -71,6 +89,21 @@ public class Station {
 		_iAvBikes = mStation.getInt("available_bikes");
 		_iAvBikeStands = mStation.getInt("available_bike_stands");
 		_mLastUpdate = new Date(mStation.getLong("last_update"));
+
+		_bShallow = false;
+	}
+
+	public Station(int iId, int iAvBikes, int iAvBikeStands, boolean bOpened) {
+		_iId = iId;
+		_iContract = Contract.findContractById(iId / 1000000);
+		_iNumber = iId - _iContract.getId() * 1000000;
+
+		_bOpened = bOpened;
+		_iAvBikes = iAvBikes;
+		_iAvBikeStands = iAvBikeStands;
+		_mLastUpdate = Calendar.getInstance().getTime();
+
+		_bShallow = true;
 	}
 
 	public int getNumber() { return _iNumber; }
@@ -78,7 +111,7 @@ public class Station {
 	public int getId() { return _iId; }
 	public String getName() { return _sName; }
 	public String getAddress() { return _sAddress; }
-	public LatLng getPosition() { return _mPos; }
+	public LatLng getPosition() { return new LatLng(_dLat, _dLng); }
 	public boolean hasBanking() { return _bBanking; }
 	public boolean hasBonus() { return _bBonus; }
 
@@ -86,4 +119,11 @@ public class Station {
 	public int getAvailableBikes() { return _iAvBikes; }
 	public int getAvailableBikeStands() { return _iAvBikeStands; }
 	public Date getLastUpdate() { return _mLastUpdate; }
+
+	public void update(boolean bStatus, int iAvBikes, int iAvBikeStands) {
+		_bOpened = bStatus;
+		_iAvBikes = iAvBikes;
+		_iAvBikeStands = iAvBikeStands;
+		_mLastUpdate = Calendar.getInstance().getTime();
+	}
 }

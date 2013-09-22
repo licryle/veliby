@@ -1,7 +1,14 @@
 package com.licryle.veliby;
 
 import java.io.File;
-import java.text.DateFormat;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.StreamCorruptedException;
+import java.sql.Date;
 import java.util.Calendar;
 import java.util.Hashtable;
 import java.util.Iterator;
@@ -10,7 +17,6 @@ import java.util.Map;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface.OnClickListener;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.location.Criteria;
@@ -25,13 +31,6 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.view.View;
-import android.widget.AdapterView;
-import android.widget.AdapterView.OnItemSelectedListener;
-import android.widget.ArrayAdapter;
-import android.widget.ImageButton;
-import android.widget.Spinner;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -53,14 +52,19 @@ public class MapsActivity extends ActionBarActivity {
   protected Hashtable<Integer, Station> mStations;
   protected boolean	bModeFindBike = true;
   protected boolean	bDownloading = false;
+  protected File mStationsDataFile;
+  protected int iStaticDeadline = 5;
 
 	protected static Hashtable<Integer, Integer> mBikeResources = 
-			new Hashtable<Integer, Integer>() {{
-				put(0,R.drawable.presence_invisible);
-				put(2,R.drawable.presence_busy);
-				put(4,R.drawable.presence_away);
-				put(1000,R.drawable.presence_online);
-			}}; 
+			new Hashtable<Integer, Integer>() {
+        private static final long serialVersionUID = -276505145697466182L;
+				{
+					put(0,R.drawable.presence_invisible);
+					put(2,R.drawable.presence_busy);
+					put(4,R.drawable.presence_away);
+					put(1000,R.drawable.presence_online);
+				}
+			}; 
 
 
   @Override
@@ -69,7 +73,8 @@ public class MapsActivity extends ActionBarActivity {
 
     setContentView(R.layout.activity_maps);
     mStations = new Hashtable<Integer, Station>();
-    // ToDo: load static info from file
+
+    loadStaticInfo();
 
     setupMap();
 
@@ -80,7 +85,37 @@ public class MapsActivity extends ActionBarActivity {
     }
   }
 
-  @Override
+  private void loadStaticInfo() {
+  	File mAppDir = new File(
+  			Environment.getExternalStorageDirectory().getPath() + "/Veliby/");
+
+   	mAppDir.mkdirs();
+  	mStationsDataFile = new File(mAppDir.getAbsolutePath() +
+				"/stations.comlete");
+
+		try {
+	    FileInputStream mInput = new FileInputStream(mStationsDataFile);
+	    ObjectInputStream mObjectStream = new ObjectInputStream(mInput);
+	    mStations = (Hashtable<Integer, Station>) mObjectStream.readObject();
+	    mObjectStream.close();
+	    return;
+    } catch (FileNotFoundException e) {
+	    e.printStackTrace();
+    } catch (StreamCorruptedException e) {
+	    // TODO Auto-generated catch block
+	    e.printStackTrace();
+    } catch (IOException e) {
+	    // TODO Auto-generated catch block
+	    e.printStackTrace();
+    } catch (ClassNotFoundException e) {
+	    // TODO Auto-generated catch block
+	    e.printStackTrace();
+    }
+
+		mStations = new Hashtable<Integer, Station>();
+  }
+
+	@Override
   public boolean onCreateOptionsMenu(Menu menu) {
       // Inflate the menu items for use in the action bar
       MenuInflater inflater = getMenuInflater();
@@ -157,21 +192,30 @@ public class MapsActivity extends ActionBarActivity {
 
   	Intent intent = new Intent(this, DownloadService.class);
 
-  	File appDir = new File(
-  			Environment.getExternalStorageDirectory().getPath() + "/Veliby/");
-  	// have the object build the directory structure, if needed.
-  	appDir.mkdirs();
-  	sFileStations = appDir.getAbsolutePath() +
-				"/com.licryle.veliby.stations.status";
-
-  	intent.putExtra("url", "https://api.jcdecaux.com/vls/v1/stations?" +
-  			"contract=Paris&apiKey=718b4e0e0b1f01af842ff54c38bed00eaa63ce3c");
-  	intent.putExtra("tempFile", sFileStations);
+  	if (isStaticDataExpired()) {
+    	intent.putExtra("url", "http://10.0.2.2:80/veliby/?static");
+    	intent.putExtra("full_cycle", true);
+  	} else {
+    	intent.putExtra("url", "http://10.0.2.2:80/veliby/");
+    	intent.putExtra("full_cycle", false);
+  	}
   	intent.putExtra("receiver", new DownloadReceiver(new Handler()));
   	startService(intent);
   }
 
-  protected void alertBox(String title, String mymessage,
+  private boolean isStaticDataExpired() {
+		if (!mStationsDataFile.exists()) {
+			return true;
+		}
+
+	  Date mLastModified = new Date(mStationsDataFile.lastModified());
+	  Calendar mDeadline = Calendar.getInstance();
+	  mDeadline.add(Calendar.DATE, -iStaticDeadline);
+
+	  return mLastModified.after(mDeadline.getTime());
+  }
+
+	protected void alertBox(String title, String mymessage,
   		OnClickListener onclick) {
     new AlertDialog.Builder(this)
     			.setMessage(mymessage)
@@ -237,12 +281,41 @@ public class MapsActivity extends ActionBarActivity {
       super.onReceiveResult(resultCode, resultData);
 
       if (resultCode == DownloadService.SUCCESS) {
-      	mStations.clear();
-        Hashtable<Integer, Station> result = (Hashtable<Integer, Station>) 
-        		resultData.getSerializable("stations");
-        // ToDo: update only the dynamic data once server will be ready
-        for (Map.Entry<Integer, Station> mStation : result.entrySet()) {
-        	mStations.put(mStation.getKey(), mStation.getValue());
+
+        if (resultData.getBoolean("full_cycle")) {
+        	mStations.clear();
+          Hashtable<Integer, Station> result = (Hashtable<Integer, Station>) 
+          		resultData.getSerializable("stations");
+ 
+	        for (Map.Entry<Integer, Station> mStation : result.entrySet()) {
+	        	mStations.put(mStation.getKey(), mStation.getValue());
+	        }
+
+          mStationsDataFile.delete();
+	        FileOutputStream mOutput;
+          try {
+	          mOutput = new FileOutputStream(mStationsDataFile);
+		        ObjectOutputStream mObjectStream = new ObjectOutputStream(mOutput);
+		        mObjectStream.writeObject(mStations);
+		        mObjectStream.close();
+          } catch (FileNotFoundException e) {
+	          e.printStackTrace();
+          } catch (IOException e) {
+	          e.printStackTrace();
+	          mStationsDataFile.delete(); // Todo: this isn't reliable
+          }
+        } else {
+          Hashtable<Integer, Station> result = (Hashtable<Integer, Station>) 
+          		resultData.getSerializable("stations");
+	        for (Map.Entry<Integer, Station> mStation : result.entrySet()) {
+	        	Station mStationToUp = mStations.get(mStation.getValue().getId());
+
+	        	if (mStationToUp != null) {
+	        		mStationToUp.update(mStation.getValue().isOpened(),
+	        				mStation.getValue().getAvailableBikes(),
+	        				mStation.getValue().getAvailableBikeStands());
+	        	}
+	        }
         }
 
         bDownloading = false;

@@ -23,8 +23,11 @@ class DynamicStation extends Station {
   public function getLastUpdate() { return $this->_iLastUpdate; }
 
   public function getMinimizedDynamic() {
-    return pack("LC*", $this->getId(),
-        $this->_iAvBikes, $this->_iAvBikeStands, intval($this->_bOpened));
+    $sOutput = pack("L", $this->getId());
+
+
+    return $sOutput[0] . $sOutput[1] . $sOutput[2] . pack("C*",
+      $this->_iAvBikes, $this->_iAvBikeStands, intval($this->_bOpened));
   }
 
   public function getArray() {
