@@ -1,6 +1,6 @@
 <?php
 
-error_reporting(E_ALL);
+error_reporting(0);
 
 define('PATH_BASE', dirname(__FILE__) . '/');
 define('PATH_TMP', PATH_BASE . 'tmp/');
@@ -24,10 +24,11 @@ if (!isset(Station::$aContracts[$iContract])) {
 function isBeingWritten($sFilePath) {
   $mFile = fopen($sFilePath, 'r');
   $bLock = flock($mFile, LOCK_EX | LOCK_NB);
+
   flock($mFile, LOCK_UN);
   fclose($mFile);
 
-  return $mFile && $bLock;
+  return $mFile && !$bLock;
 }
 
 function openLockedFileTimeOut($sFilePath, $sMode, $iTimeOut, $bRead) {
@@ -38,15 +39,18 @@ function openLockedFileTimeOut($sFilePath, $sMode, $iTimeOut, $bRead) {
   }
 
   $mFile = fopen($sFilePath, $sMode);
+  if (!$mFile) return false;
 
   $iLock = $bRead ? LOCK_SH : LOCK_EX;
   $bLock = flock($mFile, $iLock | LOCK_NB);
+  if (!$bLock) return false;
 
-  return $bLock ? $mFile : false;
+  return $mFile;
 }
 
 $sFilePath .= '_' . $iContract;
-if (!file_exists($sFilePath) || (filemtime($sFilePath) +  $iContract)> time()) {
+if (!file_exists($sFilePath) ||
+    (filemtime($sFilePath) +  $iDataTimeout) < time()) {
   // If data not cached or outdated
   if (!isBeingWritten($sFilePath)) {
     // Not being written, take the stab at writing it
@@ -62,6 +66,7 @@ if (!file_exists($sFilePath) || (filemtime($sFilePath) +  $iContract)> time()) {
     }
 
     fflush($mFile);            // flush output before releasing the lock
+    touch($mFile);
     flock($mFile, LOCK_UN);    // release the lock
   }
 }
@@ -74,7 +79,9 @@ if (!$mFile) die('CANNOT_READ');
 $iFileSize = filesize($sFilePath);
 header('Content-Type: binary/octet-stream');
 header('Content-Length: ' . $iFileSize);
+
 echo fread($mFile, $iFileSize);
+
 fclose($mFile);
 flock($mFile, LOCK_UN);
 

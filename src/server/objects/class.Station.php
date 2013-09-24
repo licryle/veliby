@@ -18,7 +18,8 @@ class Station {
 
   public function __construct(Array $aStation) {
     $this->_iNumber = intval($aStation['number']);
-    $this->_iContract = array_search($aStation['contract_name'], self::$aContracts);
+    $this->_iContract = array_search($aStation['contract_name'],
+                                     self::$aContracts);
     $this->_iId = 1000000 * $this->_iContract + $this->_iNumber;
 
     $this->_sName = $aStation['name'];

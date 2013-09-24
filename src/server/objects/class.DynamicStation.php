@@ -25,9 +25,8 @@ class DynamicStation extends Station {
   public function getMinimizedDynamic() {
     $sOutput = pack("L", $this->getId());
 
-
     return $sOutput[0] . $sOutput[1] . $sOutput[2] . pack("C*",
-      $this->_iAvBikes, $this->_iAvBikeStands, intval($this->_bOpened));
+        $this->_iAvBikes, $this->_iAvBikeStands, intval($this->_bOpened));
   }
 
   public function getArray() {
