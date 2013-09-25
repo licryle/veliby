@@ -53,7 +53,10 @@ public class MapsActivity extends ActionBarActivity {
   protected boolean	bModeFindBike = true;
   protected boolean	bDownloading = false;
   protected File mStationsDataFile;
-  protected int iStaticDeadline = 5;
+  protected int iStaticDeadline = 7;
+  protected String sUrlFull = "https://api.jcdecaux.com/vls/v1/stations?" +
+  		"contract=Paris&apiKey=718b4e0e0b1f01af842ff54c38bed00eaa63ce3c";
+  protected String sUrlDynamic = "http://veliby.berliat.fr/?c=1";
 
 	protected static Hashtable<Integer, Integer> mBikeResources = 
 			new Hashtable<Integer, Integer>() {
@@ -145,9 +148,9 @@ public class MapsActivity extends ActionBarActivity {
       	}
 
       	item.setIcon(getResources().getDrawable(iIcon));
-      	lightMessage(iToastStr);
 
         updateMarkers(bModeFindBike);
+      	lightMessage(iToastStr, false);
       return true;
 
       default:
@@ -161,9 +164,10 @@ public class MapsActivity extends ActionBarActivity {
   	downloadMarkers();
   }
  
-  protected void lightMessage(int iTextResource) {
+  protected void lightMessage(int iTextResource, boolean bLong) {
   	String sText = getResources().getString(iTextResource);
-  	Toast.makeText(getApplicationContext(), sText, Toast.LENGTH_SHORT).show();  	
+  	int iLength = bLong ? Toast.LENGTH_LONG : Toast.LENGTH_SHORT;
+  	Toast.makeText(getApplicationContext(), sText, iLength).show();  	
   }
  
   protected void firstStart() {
@@ -188,15 +192,15 @@ public class MapsActivity extends ActionBarActivity {
   	if (bDownloading) return;
   	bDownloading = true;
 
-  	lightMessage(R.string.action_reload_start);
+  	lightMessage(R.string.action_reload_start, true);
 
   	Intent intent = new Intent(this, DownloadService.class);
 
   	if (isStaticDataExpired()) {
-    	intent.putExtra("url", "http://10.0.2.2:80/veliby/?static");
+    	intent.putExtra("url", sUrlFull);
     	intent.putExtra("full_cycle", true);
   	} else {
-    	intent.putExtra("url", "http://10.0.2.2:80/veliby/");
+    	intent.putExtra("url", sUrlDynamic);
     	intent.putExtra("full_cycle", false);
   	}
   	intent.putExtra("receiver", new DownloadReceiver(new Handler()));
@@ -212,7 +216,7 @@ public class MapsActivity extends ActionBarActivity {
 	  Calendar mDeadline = Calendar.getInstance();
 	  mDeadline.add(Calendar.DATE, -iStaticDeadline);
 
-	  return mLastModified.after(mDeadline.getTime());
+	  return mLastModified.before(mDeadline.getTime());
   }
 
 	protected void alertBox(String title, String mymessage,
@@ -267,6 +271,8 @@ public class MapsActivity extends ActionBarActivity {
    	  mMap.animateCamera(cu, 700, null);
     }
 
+    updateMarkers(bModeFindBike);
+
     return true;
   }
 
@@ -280,47 +286,65 @@ public class MapsActivity extends ActionBarActivity {
     protected void onReceiveResult(int resultCode, Bundle resultData) {
       super.onReceiveResult(resultCode, resultData);
 
-      if (resultCode == DownloadService.SUCCESS) {
-
-        if (resultData.getBoolean("full_cycle")) {
-        	mStations.clear();
-          Hashtable<Integer, Station> result = (Hashtable<Integer, Station>) 
-          		resultData.getSerializable("stations");
- 
-	        for (Map.Entry<Integer, Station> mStation : result.entrySet()) {
-	        	mStations.put(mStation.getKey(), mStation.getValue());
+      switch (resultCode) {
+      	case DownloadService.SUCCESS:
+	        if (resultData.getBoolean("full_cycle")) {
+	        	mStations.clear();
+	          Hashtable<Integer, Station> mResult = (Hashtable<Integer, Station>) 
+	          		resultData.getSerializable("stations");
+	 
+		        for (Map.Entry<Integer, Station> mStation : mResult.entrySet()) {
+		        	mStations.put(mStation.getKey(), new Station(mStation.getValue()));
+		        }
+	
+	          mStationsDataFile.delete();
+		        FileOutputStream mOutput;
+	          try {
+		          mOutput = new FileOutputStream(mStationsDataFile);
+			        ObjectOutputStream mObjectStream = new ObjectOutputStream(mOutput);
+	 
+			        // Nulling dynamic data for storage
+			        Iterator<Map.Entry<Integer, Station>> it = mResult.entrySet().
+			        		iterator();
+	
+			        while (it.hasNext()) {
+			        	Map.Entry<Integer, Station> entry = it.next();
+			        	Station mStation = entry.getValue();
+			        	mStation.update(false, 0, 0);
+			        }
+	
+			        mObjectStream.writeObject(mResult);
+			        mObjectStream.close();
+	          } catch (FileNotFoundException e) {
+		          e.printStackTrace();
+	          } catch (IOException e) {
+		          e.printStackTrace();
+		          mStationsDataFile.delete(); // TODO: this isn't reliable
+	          }
+	        } else {
+	          Hashtable<Integer, Station> mResult = (Hashtable<Integer, Station>) 
+	          		resultData.getSerializable("stations");
+		        for (Map.Entry<Integer, Station> mStation : mResult.entrySet()) {
+		        	Station mStationToUp = mStations.get(mStation.getValue().getId());
+	
+		        	if (mStationToUp != null) {
+		        		mStationToUp.update(mStation.getValue().isOpened(),
+		        				mStation.getValue().getAvailableBikes(),
+		        				mStation.getValue().getAvailableBikeStands());
+		        	}
+		        }
 	        }
+	
+	        bDownloading = false;
+	      	updateMarkers(bModeFindBike);
+	      	lightMessage(R.string.action_reload_complete, false);
+	      break;
 
-          mStationsDataFile.delete();
-	        FileOutputStream mOutput;
-          try {
-	          mOutput = new FileOutputStream(mStationsDataFile);
-		        ObjectOutputStream mObjectStream = new ObjectOutputStream(mOutput);
-		        mObjectStream.writeObject(mStations);
-		        mObjectStream.close();
-          } catch (FileNotFoundException e) {
-	          e.printStackTrace();
-          } catch (IOException e) {
-	          e.printStackTrace();
-	          mStationsDataFile.delete(); // Todo: this isn't reliable
-          }
-        } else {
-          Hashtable<Integer, Station> result = (Hashtable<Integer, Station>) 
-          		resultData.getSerializable("stations");
-	        for (Map.Entry<Integer, Station> mStation : result.entrySet()) {
-	        	Station mStationToUp = mStations.get(mStation.getValue().getId());
-
-	        	if (mStationToUp != null) {
-	        		mStationToUp.update(mStation.getValue().isOpened(),
-	        				mStation.getValue().getAvailableBikes(),
-	        				mStation.getValue().getAvailableBikeStands());
-	        	}
-	        }
-        }
-
-        bDownloading = false;
-      	lightMessage(R.string.action_reload_complete);
-      	updateMarkers(bModeFindBike);
+      	case DownloadService.FAILURE_CONNECTION:
+      	case DownloadService.FAILURE_GENERIC:
+      	case DownloadService.FAILURE_PARSE:
+	      	lightMessage(R.string.action_reload_failure, true);
+	      break;
       }
     }
   }

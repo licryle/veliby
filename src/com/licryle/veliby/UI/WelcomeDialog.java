@@ -1,8 +1,6 @@
 package com.licryle.veliby.UI;
 
 import com.licryle.veliby.R;
-import com.licryle.veliby.R.layout;
-import com.licryle.veliby.R.string;
 
 import android.app.AlertDialog;
 import android.app.Dialog;

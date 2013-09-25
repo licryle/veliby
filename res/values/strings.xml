@@ -30,6 +30,7 @@ Enfin, 2 boutons vous permettent de contrôler l\'app:</string>
     <string name="action_reload">Mettre à jour</string>
     <string name="action_reload_start">Mise à jour en cours</string>
     <string name="action_reload_complete">Mise à jour terminée</string>
+    <string name="action_reload_failure">Mise à jour échouée: veuillez vérifier votre connection internet</string>
 
     <string name="welcome_ok">Compris!</string>
 

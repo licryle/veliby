@@ -4,7 +4,6 @@ import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.Serializable;
 import java.net.ConnectException;
 import java.net.URL;
 import java.net.URLConnection;
@@ -23,6 +22,7 @@ public class DownloadService extends IntentService {
   public static final int SUCCESS = 8345;
   public static final int FAILURE_CONNECTION = 8346;
   public static final int FAILURE_GENERIC = 8347;
+  public static final int FAILURE_PARSE = 8348;
   public DownloadService() {
     super("DownloadService");
   }
@@ -82,35 +82,36 @@ public class DownloadService extends IntentService {
       Bundle mResultData = new Bundle();
       mReceiver.send(FAILURE_GENERIC, mResultData);
       e.printStackTrace();
+    } catch (Exception e) {
+      Bundle mResultData = new Bundle();
+      mReceiver.send(FAILURE_PARSE, mResultData);    	
     }
   }
 
-  protected Serializable parseFullData(ByteArrayOutputStream mInput) {
+  protected Hashtable<Integer, Station> parseFullData(
+  		ByteArrayOutputStream mInput) throws JSONException {
     String sInput = new String(mInput.toByteArray());
-    JSONArray mJSon;
-    try {
-	    mJSon = new JSONArray(sInput);
-    
-	    Hashtable<Integer, Station> mNewStations =
-	    		new Hashtable<Integer, Station>();
-	    for (int i=0; i < mJSon.length(); i++) {
-	    	Station mStation = new Station(mJSon.getJSONObject(i));
-	    	mNewStations.put(mStation.getId(), mStation);
-	    }
-
-	    return mNewStations;
-    } catch (JSONException e) {
-	    e.printStackTrace();
-	    return null;
+    JSONArray mJSon = new JSONArray(sInput);
+  
+    Hashtable<Integer, Station> mNewStations =
+    		new Hashtable<Integer, Station>();
+    for (int i=0; i < mJSon.length(); i++) {
+    	Station mStation = new Station(mJSon.getJSONObject(i));
+    	mNewStations.put(mStation.getId(), mStation);
     }
+
+    return mNewStations;
   }
 
-  protected Serializable parseDynamicData(ByteArrayOutputStream mInput) {
-  	if (mInput.size() % 6 != 0) return null;
+  protected Hashtable<Integer, Station> parseDynamicData(
+  		ByteArrayOutputStream mInput) throws Exception {
+  	if (mInput.size() % 6 != 0) throw new Exception("Not rounded dynamic data");
 
   	byte aData[] = mInput.toByteArray();
   	int i = 0;
-
+  
+    Hashtable<Integer, Station> mNewStations =
+    		new Hashtable<Integer, Station>();
   	while (i < mInput.size()) {
   		int iId = Util.intToUInt((new Byte(aData[i++])).intValue(), 8) +
   							Util.intToUInt((new Byte(aData[i++])).intValue() << 8, 16) +
@@ -120,9 +121,10 @@ public class DownloadService extends IntentService {
   		int iAvBikeStands = (new Byte(aData[i++])).intValue();
   		boolean bOpened 	= (new Byte(aData[i++])).intValue() == 1;
   		
-  		new Station(iId, iAvBikes, iAvBikeStands, bOpened);
+  		Station mStation = new Station(iId, iAvBikes, iAvBikeStands, bOpened);
+    	mNewStations.put(mStation.getId(), mStation);
   	}
 
-    return null;
+    return mNewStations;
   }
 }

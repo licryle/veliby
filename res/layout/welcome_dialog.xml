@@ -213,7 +213,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
             android:gravity="left"
-            android:text="@string/welcome_mode_find"
+            android:text="@string/welcome_mode_return"
             android:layout_width="0dp"
             android:layout_weight="8" />
     </LinearLayout>

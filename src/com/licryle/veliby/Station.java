@@ -93,6 +93,31 @@ public class Station implements Serializable {
 		_bShallow = false;
 	}
 
+	public Station(Station mOriginal) {
+		_bShallow = mOriginal.iShallow();
+
+		_iNumber = mOriginal.getNumber();
+		_iContract = mOriginal.getContract();
+		_iId = mOriginal.getId();
+
+		_bOpened = mOriginal.isOpened();
+		_iAvBikes = mOriginal.getAvailableBikes();
+		_iAvBikeStands = mOriginal.getAvailableBikeStands();
+		_mLastUpdate = mOriginal.getLastUpdate();
+
+		if (!iShallow()) {	
+			_sName = mOriginal.getName();
+			_sAddress = mOriginal.getAddress();
+	
+			_dLat = mOriginal.getPosition().latitude;
+			_dLng = mOriginal.getPosition().longitude;
+	
+			_bBanking = mOriginal.hasBanking();
+			_bBonus = mOriginal.hasBonus();
+			_iBikeStands = mOriginal._iBikeStands;
+		}
+	}
+
 	public Station(int iId, int iAvBikes, int iAvBikeStands, boolean bOpened) {
 		_iId = iId;
 		_iContract = Contract.findContractById(iId / 1000000);
@@ -119,6 +144,8 @@ public class Station implements Serializable {
 	public int getAvailableBikes() { return _iAvBikes; }
 	public int getAvailableBikeStands() { return _iAvBikeStands; }
 	public Date getLastUpdate() { return _mLastUpdate; }
+
+	public boolean iShallow() { return _bShallow; }
 
 	public void update(boolean bStatus, int iAvBikes, int iAvBikeStands) {
 		_bOpened = bStatus;
