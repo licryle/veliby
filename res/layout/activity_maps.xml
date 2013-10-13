@@ -28,4 +28,8 @@
           map:uiTiltGestures="false"
           map:uiZoomControls="false"
           map:uiZoomGestures="true" />
+<<<<<<< HEAD
 </LinearLayout>
+=======
+</LinearLayout>
+>>>>>>> bd7a3b4b6ab15433f20e9bbb3fbaf2ff311f2542
