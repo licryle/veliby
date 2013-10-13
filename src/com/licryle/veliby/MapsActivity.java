@@ -43,31 +43,21 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.licryle.veliby.BikeMap.BikeMap;
+import com.licryle.veliby.BikeMap.BikeMapListener;
+import com.licryle.veliby.BikeMap.DownloadStationsService;
+import com.licryle.veliby.BikeMap.Station;
 import com.licryle.veliby.UI.Maps_InfoWindowAdapter;
 
-public class MapsActivity extends ActionBarActivity {
-	private GoogleMap mMap;
+public class MapsActivity extends ActionBarActivity implements BikeMapListener {
+  protected BikeMap mBikeMap = null;
 
   protected String sFileStations = null;
-  protected Hashtable<Integer, Station> mStations;
-  protected boolean	bModeFindBike = true;
-  protected boolean	bDownloading = false;
   protected File mStationsDataFile;
   protected int iStaticDeadline = 7;
   protected String sUrlFull = "https://api.jcdecaux.com/vls/v1/stations?" +
   		"contract=Paris&apiKey=718b4e0e0b1f01af842ff54c38bed00eaa63ce3c";
   protected String sUrlDynamic = "http://veliby.berliat.fr/?c=1";
-
-	protected static Hashtable<Integer, Integer> mBikeResources = 
-			new Hashtable<Integer, Integer>() {
-        private static final long serialVersionUID = -276505145697466182L;
-				{
-					put(0,R.drawable.presence_invisible);
-					put(2,R.drawable.presence_busy);
-					put(4,R.drawable.presence_away);
-					put(1000,R.drawable.presence_online);
-				}
-			}; 
 
 
   @Override
@@ -75,48 +65,31 @@ public class MapsActivity extends ActionBarActivity {
     super.onCreate(savedInstanceState);
 
     setContentView(R.layout.activity_maps);
-    mStations = new Hashtable<Integer, Station>();
 
-    loadStaticInfo();
 
-    setupMap();
+    File mAppDir = new File(
+        Environment.getExternalStorageDirectory().getPath() + "/Veliby/");
 
-    if (hasPlayServices()) {
-    	downloadMarkers();
+    mAppDir.mkdirs();
+    mStationsDataFile = new File(mAppDir.getAbsolutePath() +
+        "/stations.comlete");
 
-    	firstStart();
+    firstStart();
+
+    GoogleMap mMap = ((SupportMapFragment) this.getSupportFragmentManager().
+        findFragmentById(R.id.map)).getMap();
+ 
+    mBikeMap = new BikeMap(this, mStationsDataFile, mMap);
+    mBikeMap.registerBikeMapListener(this);
+    
+    if (! Util.hasPlayServices(this)) {
+      alertBox(getResources().getString(R.string.playservice_issue_title),
+          getResources().getString(R.string.playservice_issue_content), null);
+    } else {
+      downloadMarkers();
     }
   }
 
-  private void loadStaticInfo() {
-  	File mAppDir = new File(
-  			Environment.getExternalStorageDirectory().getPath() + "/Veliby/");
-
-   	mAppDir.mkdirs();
-  	mStationsDataFile = new File(mAppDir.getAbsolutePath() +
-				"/stations.comlete");
-
-		try {
-	    FileInputStream mInput = new FileInputStream(mStationsDataFile);
-	    ObjectInputStream mObjectStream = new ObjectInputStream(mInput);
-	    mStations = (Hashtable<Integer, Station>) mObjectStream.readObject();
-	    mObjectStream.close();
-	    return;
-    } catch (FileNotFoundException e) {
-	    e.printStackTrace();
-    } catch (StreamCorruptedException e) {
-	    // TODO Auto-generated catch block
-	    e.printStackTrace();
-    } catch (IOException e) {
-	    // TODO Auto-generated catch block
-	    e.printStackTrace();
-    } catch (ClassNotFoundException e) {
-	    // TODO Auto-generated catch block
-	    e.printStackTrace();
-    }
-
-		mStations = new Hashtable<Integer, Station>();
-  }
 
 	@Override
   public boolean onCreateOptionsMenu(Menu menu) {
@@ -125,6 +98,18 @@ public class MapsActivity extends ActionBarActivity {
       inflater.inflate(R.menu.maps, menu);
       return super.onCreateOptionsMenu(menu);
   }
+
+	protected void downloadMarkers() {
+	  if (mBikeMap.isDownloading()) { return; }
+
+    lightMessage(R.string.action_reload_start, true);
+ 
+    if (isStaticDataExpired()) {
+      mBikeMap.downloadMarkers(true, sUrlFull);
+    } else {
+      mBikeMap.downloadMarkers(false, sUrlDynamic);
+    }
+	}
 
   @Override
   public boolean onOptionsItemSelected(MenuItem item) {
@@ -135,7 +120,7 @@ public class MapsActivity extends ActionBarActivity {
       return true;
 
       case R.id.action_mode:
-      	bModeFindBike = ! bModeFindBike;
+      	boolean bModeFindBike = ! mBikeMap.isFindBikeMode();
 
       	int iIcon;
       	int iToastStr;
@@ -149,7 +134,7 @@ public class MapsActivity extends ActionBarActivity {
 
       	item.setIcon(getResources().getDrawable(iIcon));
 
-        updateMarkers(bModeFindBike);
+      	mBikeMap.changeBikeMode(bModeFindBike);
       	lightMessage(iToastStr, false);
       return true;
 
@@ -188,25 +173,6 @@ public class MapsActivity extends ActionBarActivity {
   	}
   }
 
-  protected void downloadMarkers() {
-  	if (bDownloading) return;
-  	bDownloading = true;
-
-  	lightMessage(R.string.action_reload_start, true);
-
-  	Intent intent = new Intent(this, DownloadService.class);
-
-  	if (isStaticDataExpired()) {
-    	intent.putExtra("url", sUrlFull);
-    	intent.putExtra("full_cycle", true);
-  	} else {
-    	intent.putExtra("url", sUrlDynamic);
-    	intent.putExtra("full_cycle", false);
-  	}
-  	intent.putExtra("receiver", new DownloadReceiver(new Handler()));
-  	startService(intent);
-  }
-
   private boolean isStaticDataExpired() {
 		if (!mStationsDataFile.exists()) {
 			return true;
@@ -235,151 +201,15 @@ public class MapsActivity extends ActionBarActivity {
   	startActivity(intent);
   }
 
-  private boolean hasPlayServices() {
-  	int iStatus = GooglePlayServicesUtil.
-  			isGooglePlayServicesAvailable(getApplicationContext());
-  	if (iStatus != ConnectionResult.SUCCESS) {
-      alertBox(getResources().getString(R.string.playservice_issue_title),
-      		getResources().getString(R.string.playservice_issue_content), null);
-      return false;
-  	}
 
-  	return true;
+  @Override
+  public void OnDownloadFailure(BikeMap mBikeMap) {
+    lightMessage(R.string.action_reload_failure, true);    
   }
 
-  private boolean setupMap() {
-    mMap = ((SupportMapFragment) getSupportFragmentManager().
-   		     findFragmentById(R.id.map)).getMap();
 
-    if (mMap == null) return false;
-
-    mMap.setMyLocationEnabled(true);
-    mMap.setInfoWindowAdapter(new Maps_InfoWindowAdapter(this, mStations));
-
-    LocationManager lm = (LocationManager) getSystemService(
-    		Context.LOCATION_SERVICE);
-    Criteria crit = new Criteria();
-    crit.setAccuracy(Criteria.ACCURACY_FINE);
-    String provider = lm.getBestProvider(crit, true);
-    Location lastKnownLocation = lm.getLastKnownLocation(provider);
-    if (lastKnownLocation != null) {
-    	LatLng ll = new LatLng(lastKnownLocation.getLatitude(),
-    			lastKnownLocation.getLongitude());
-
-   	  CameraUpdate cu = CameraUpdateFactory.newCameraPosition(
-   		  	new CameraPosition(ll, 16, 0, 0));
-   	  mMap.animateCamera(cu, 700, null);
-    }
-
-    updateMarkers(bModeFindBike);
-
-    return true;
-  }
-
-  private class DownloadReceiver extends ResultReceiver{
-    public DownloadReceiver(Handler handler) {
-      super(handler);
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    protected void onReceiveResult(int resultCode, Bundle resultData) {
-      super.onReceiveResult(resultCode, resultData);
-
-      switch (resultCode) {
-      	case DownloadService.SUCCESS:
-	        if (resultData.getBoolean("full_cycle")) {
-	        	mStations.clear();
-	          Hashtable<Integer, Station> mResult = (Hashtable<Integer, Station>) 
-	          		resultData.getSerializable("stations");
-	 
-		        for (Map.Entry<Integer, Station> mStation : mResult.entrySet()) {
-		        	mStations.put(mStation.getKey(), new Station(mStation.getValue()));
-		        }
-	
-	          mStationsDataFile.delete();
-		        FileOutputStream mOutput;
-	          try {
-		          mOutput = new FileOutputStream(mStationsDataFile);
-			        ObjectOutputStream mObjectStream = new ObjectOutputStream(mOutput);
-	 
-			        // Nulling dynamic data for storage
-			        Iterator<Map.Entry<Integer, Station>> it = mResult.entrySet().
-			        		iterator();
-	
-			        while (it.hasNext()) {
-			        	Map.Entry<Integer, Station> entry = it.next();
-			        	Station mStation = entry.getValue();
-			        	mStation.update(false, 0, 0);
-			        }
-	
-			        mObjectStream.writeObject(mResult);
-			        mObjectStream.close();
-	          } catch (FileNotFoundException e) {
-		          e.printStackTrace();
-	          } catch (IOException e) {
-		          e.printStackTrace();
-		          mStationsDataFile.delete(); // TODO: this isn't reliable
-	          }
-	        } else {
-	          Hashtable<Integer, Station> mResult = (Hashtable<Integer, Station>) 
-	          		resultData.getSerializable("stations");
-		        for (Map.Entry<Integer, Station> mStation : mResult.entrySet()) {
-		        	Station mStationToUp = mStations.get(mStation.getValue().getId());
-	
-		        	if (mStationToUp != null) {
-		        		mStationToUp.update(mStation.getValue().isOpened(),
-		        				mStation.getValue().getAvailableBikes(),
-		        				mStation.getValue().getAvailableBikeStands());
-		        	}
-		        }
-	        }
-	
-	        bDownloading = false;
-	      	updateMarkers(bModeFindBike);
-	      	lightMessage(R.string.action_reload_complete, false);
-	      break;
-
-      	case DownloadService.FAILURE_CONNECTION:
-      	case DownloadService.FAILURE_GENERIC:
-      	case DownloadService.FAILURE_PARSE:
-	      	lightMessage(R.string.action_reload_failure, true);
-	      break;
-      }
-    }
-  }
-
-  protected void updateMarkers(boolean bFindBike) {
-  	if (mStations == null || mMap == null) return;
-  	
-    mMap.clear();
-    Iterator<Map.Entry<Integer, Station>> it = mStations.entrySet().
-    		iterator();
-
-    while (it.hasNext()) {
-    	Map.Entry<Integer, Station> entry = it.next();
-    	Station mStation = entry.getValue();
-
-    	MarkerOptions mOpts = new MarkerOptions();
-    	mOpts.position(mStation.getPosition());
-    	mOpts.title(mStation.getName());
-    	
-    	int id = mStation.getId();
-    	mOpts.snippet(String.valueOf(id));
-
-    	int iIcon;
-			if (! mStation.isOpened()) {
-    		iIcon = R.drawable.presence_offline;
-    	} else {
-      	int iBikes = (bFindBike) ?
-      			 mStation.getAvailableBikes() :
-      			 mStation.getAvailableBikeStands();
-
-      	iIcon = Util.resolveResourceFromNumber(mBikeResources, iBikes);
-    	}
-
-    	mOpts.icon(BitmapDescriptorFactory.fromResource(iIcon));
-    	mMap.addMarker(mOpts);
-    }
+  @Override
+  public void OnDownloadSuccess(BikeMap mBikeMap) {
+    lightMessage(R.string.action_reload_complete, false);
   }
 }

@@ -28,5 +28,4 @@
           map:uiTiltGestures="false"
           map:uiZoomControls="false"
           map:uiZoomGestures="true" />
-
 </LinearLayout>

@@ -1,220 +1,224 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/welcome_dialog"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:layout_marginLeft="2dp"
-    android:layout_marginRight="2dp"
-    android:orientation="vertical" >
-
-    <TextView
-        android:id="@+id/welcome_introduction"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="10dp"
-        android:layout_weight="1"
-        android:gravity="fill"
-        android:text="@string/welcome_introduction" />
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content">
 
     <LinearLayout
-        android:id="@+id/welcome_row_plenty"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="3dp" >
-
-        <ImageView
-            android:id="@+id/welcome_plenty_img"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:contentDescription="@string/welcome_plenty"
-            android:src="@drawable/presence_online" />
-
-        <TextView
-            android:id="@+id/welcome_plenty"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:gravity="left"
-            android:text="@string/welcome_plenty"
-            android:layout_width="0dp"
-            android:layout_weight="8" />
-    </LinearLayout>
-
-    <LinearLayout
-        android:id="@+id/welcome_row_some"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="3dp" >
-
-        <ImageView
-            android:id="@+id/welcome_some_img"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:contentDescription="@string/welcome_some"
-            android:src="@drawable/presence_away" />
-
-        <TextView
-            android:id="@+id/welcome_some"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:gravity="left"
-            android:text="@string/welcome_some"
-            android:layout_width="0dp"
-            android:layout_weight="8" />
-    </LinearLayout>
-    
-
-    <LinearLayout
-        android:id="@+id/welcome_row_few"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="3dp" >
-
-        <ImageView
-            android:id="@+id/welcome_few_img"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:contentDescription="@string/welcome_few"
-            android:src="@drawable/presence_busy" />
-
-        <TextView
-            android:id="@+id/welcome_few"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:gravity="left"
-            android:text="@string/welcome_few"
-            android:layout_width="0dp"
-            android:layout_weight="8" />
-    </LinearLayout>
-
-    <LinearLayout
-        android:id="@+id/welcome_row_none"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="3dp" >
-
-        <ImageView
-            android:id="@+id/welcome_none_img"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:contentDescription="@string/welcome_none"
-            android:src="@drawable/presence_invisible" />
-
-        <TextView
-            android:id="@+id/welcome_none"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:gravity="left"
-            android:text="@string/welcome_none"
-            android:layout_width="0dp"
-            android:layout_weight="8" />
-    </LinearLayout>
-
-    <LinearLayout
-        android:id="@+id/welcome_row_closed"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="3dp" >
-
-        <ImageView
-            android:id="@+id/welcome_closed_img"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:contentDescription="@string/welcome_closed"
-            android:src="@drawable/presence_offline" />
-
-        <TextView
-            android:id="@+id/welcome_closed"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:gravity="left"
-            android:text="@string/welcome_closed"
-            android:layout_width="0dp"
-            android:layout_weight="8" />
-    </LinearLayout>
-
-    <TextView
-        android:id="@+id/welcome_controls"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:layout_weight="1"
-        android:gravity="fill"
-        android:text="@string/welcome_controls" />
-
-    <LinearLayout
-        android:id="@+id/welcome_row_refresh"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="10dp" >
-
-        <ImageView
-            android:id="@+id/welcome_refresh_img"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:contentDescription="@string/welcome_refresh"
-            android:src="@drawable/ic_menu_refresh" />
-
-        <TextView
-            android:id="@+id/welcome_refresh"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:gravity="left"
-            android:text="@string/welcome_refresh"
-            android:layout_width="0dp"
-            android:layout_weight="8" />
-    </LinearLayout>
-
-    <LinearLayout
-        android:id="@+id/welcome_row_mode_find"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="3dp" >
-
-        <ImageView
-            android:id="@+id/welcome_mode_find_img"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:contentDescription="@string/welcome_mode_find"
-            android:src="@drawable/ic_menu_upload" />
-
-        <TextView
-            android:id="@+id/welcome_mode_find"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:gravity="left"
-            android:text="@string/welcome_mode_find"
-            android:layout_width="0dp"
-            android:layout_weight="8" />
-    </LinearLayout>
-
-    <LinearLayout
-        android:id="@+id/welcome_row_mode_return"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="3dp" >
-
-        <ImageView
-            android:id="@+id/welcome_mode_return_img"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:contentDescription="@string/welcome_mode_find"
-            android:src="@drawable/ic_menu_goto" />
-
-        <TextView
-            android:id="@+id/welcome_mode_return"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:gravity="left"
-            android:text="@string/welcome_mode_return"
-            android:layout_width="0dp"
-            android:layout_weight="8" />
-    </LinearLayout>
-</LinearLayout>
+	    android:layout_width="wrap_content"
+	    android:layout_height="wrap_content"
+	    android:layout_marginLeft="2dp"
+	    android:layout_marginRight="2dp"
+	    android:orientation="vertical" >
+	    <TextView
+	        android:id="@+id/welcome_introduction"
+	        android:layout_width="match_parent"
+	        android:layout_height="wrap_content"
+	        android:layout_marginBottom="10dp"
+	        android:layout_weight="1"
+	        android:gravity="fill"
+	        android:text="@string/welcome_introduction" />
+	
+	    <LinearLayout
+	        android:id="@+id/welcome_row_plenty"
+	        android:layout_width="match_parent"
+	        android:layout_height="wrap_content"
+	        android:layout_marginTop="3dp" >
+	
+	        <ImageView
+	            android:id="@+id/welcome_plenty_img"
+	            android:layout_width="0dp"
+	            android:layout_height="wrap_content"
+	            android:layout_weight="1"
+	            android:contentDescription="@string/welcome_plenty"
+	            android:src="@drawable/presence_online" />
+	
+	        <TextView
+	            android:id="@+id/welcome_plenty"
+	            android:layout_height="wrap_content"
+	            android:layout_gravity="center_horizontal"
+	            android:gravity="left"
+	            android:text="@string/welcome_plenty"
+	            android:layout_width="0dp"
+	            android:layout_weight="8" />
+	    </LinearLayout>
+	
+	    <LinearLayout
+	        android:id="@+id/welcome_row_some"
+	        android:layout_width="match_parent"
+	        android:layout_height="wrap_content"
+	        android:layout_marginTop="3dp" >
+	
+	        <ImageView
+	            android:id="@+id/welcome_some_img"
+	            android:layout_width="0dp"
+	            android:layout_height="wrap_content"
+	            android:layout_weight="1"
+	            android:contentDescription="@string/welcome_some"
+	            android:src="@drawable/presence_away" />
+	
+	        <TextView
+	            android:id="@+id/welcome_some"
+	            android:layout_height="wrap_content"
+	            android:layout_gravity="center_horizontal"
+	            android:gravity="left"
+	            android:text="@string/welcome_some"
+	            android:layout_width="0dp"
+	            android:layout_weight="8" />
+	    </LinearLayout>
+	    
+	
+	    <LinearLayout
+	        android:id="@+id/welcome_row_few"
+	        android:layout_width="match_parent"
+	        android:layout_height="wrap_content"
+	        android:layout_marginTop="3dp" >
+	
+	        <ImageView
+	            android:id="@+id/welcome_few_img"
+	            android:layout_width="0dp"
+	            android:layout_height="wrap_content"
+	            android:layout_weight="1"
+	            android:contentDescription="@string/welcome_few"
+	            android:src="@drawable/presence_busy" />
+	
+	        <TextView
+	            android:id="@+id/welcome_few"
+	            android:layout_height="wrap_content"
+	            android:layout_gravity="center_horizontal"
+	            android:gravity="left"
+	            android:text="@string/welcome_few"
+	            android:layout_width="0dp"
+	            android:layout_weight="8" />
+	    </LinearLayout>
+	
+	    <LinearLayout
+	        android:id="@+id/welcome_row_none"
+	        android:layout_width="match_parent"
+	        android:layout_height="wrap_content"
+	        android:layout_marginTop="3dp" >
+	
+	        <ImageView
+	            android:id="@+id/welcome_none_img"
+	            android:layout_width="0dp"
+	            android:layout_height="wrap_content"
+	            android:layout_weight="1"
+	            android:contentDescription="@string/welcome_none"
+	            android:src="@drawable/presence_invisible" />
+	
+	        <TextView
+	            android:id="@+id/welcome_none"
+	            android:layout_height="wrap_content"
+	            android:layout_gravity="center_horizontal"
+	            android:gravity="left"
+	            android:text="@string/welcome_none"
+	            android:layout_width="0dp"
+	            android:layout_weight="8" />
+	    </LinearLayout>
+	
+	    <LinearLayout
+	        android:id="@+id/welcome_row_closed"
+	        android:layout_width="match_parent"
+	        android:layout_height="wrap_content"
+	        android:layout_marginTop="3dp" >
+	
+	        <ImageView
+	            android:id="@+id/welcome_closed_img"
+	            android:layout_width="0dp"
+	            android:layout_height="wrap_content"
+	            android:layout_weight="1"
+	            android:contentDescription="@string/welcome_closed"
+	            android:src="@drawable/presence_offline" />
+	
+	        <TextView
+	            android:id="@+id/welcome_closed"
+	            android:layout_height="wrap_content"
+	            android:layout_gravity="center_horizontal"
+	            android:gravity="left"
+	            android:text="@string/welcome_closed"
+	            android:layout_width="0dp"
+	            android:layout_weight="8" />
+	    </LinearLayout>
+	
+	    <TextView
+	        android:id="@+id/welcome_controls"
+	        android:layout_width="match_parent"
+	        android:layout_height="wrap_content"
+	        android:layout_marginTop="10dp"
+	        android:layout_weight="1"
+	        android:gravity="fill"
+	        android:text="@string/welcome_controls" />
+	
+	    <LinearLayout
+	        android:id="@+id/welcome_row_refresh"
+	        android:layout_width="match_parent"
+	        android:layout_height="wrap_content"
+	        android:layout_marginTop="10dp" >
+	
+	        <ImageView
+	            android:id="@+id/welcome_refresh_img"
+	            android:layout_width="0dp"
+	            android:layout_height="wrap_content"
+	            android:layout_weight="1"
+	            android:contentDescription="@string/welcome_refresh"
+	            android:src="@drawable/ic_menu_refresh" />
+	
+	        <TextView
+	            android:id="@+id/welcome_refresh"
+	            android:layout_height="wrap_content"
+	            android:layout_gravity="center_horizontal"
+	            android:gravity="left"
+	            android:text="@string/welcome_refresh"
+	            android:layout_width="0dp"
+	            android:layout_weight="8" />
+	    </LinearLayout>
+	
+	    <LinearLayout
+	        android:id="@+id/welcome_row_mode_find"
+	        android:layout_width="match_parent"
+	        android:layout_height="wrap_content"
+	        android:layout_marginTop="3dp" >
+	
+	        <ImageView
+	            android:id="@+id/welcome_mode_find_img"
+	            android:layout_width="0dp"
+	            android:layout_height="wrap_content"
+	            android:layout_weight="1"
+	            android:contentDescription="@string/welcome_mode_find"
+	            android:src="@drawable/ic_menu_upload" />
+	
+	        <TextView
+	            android:id="@+id/welcome_mode_find"
+	            android:layout_height="wrap_content"
+	            android:layout_gravity="center_horizontal"
+	            android:gravity="left"
+	            android:text="@string/welcome_mode_find"
+	            android:layout_width="0dp"
+	            android:layout_weight="8" />
+	    </LinearLayout>
+	
+	    <LinearLayout
+	        android:id="@+id/welcome_row_mode_return"
+	        android:layout_width="match_parent"
+	        android:layout_height="wrap_content"
+	        android:layout_marginTop="3dp" >
+	
+	        <ImageView
+	            android:id="@+id/welcome_mode_return_img"
+	            android:layout_width="0dp"
+	            android:layout_height="wrap_content"
+	            android:layout_weight="1"
+	            android:contentDescription="@string/welcome_mode_find"
+	            android:src="@drawable/ic_menu_goto" />
+	
+	        <TextView
+	            android:id="@+id/welcome_mode_return"
+	            android:layout_height="wrap_content"
+	            android:layout_gravity="center_horizontal"
+	            android:gravity="left"
+	            android:text="@string/welcome_mode_return"
+	            android:layout_width="0dp"
+	            android:layout_weight="8" />
+	    </LinearLayout>
+	  </LinearLayout>
+</ScrollView>

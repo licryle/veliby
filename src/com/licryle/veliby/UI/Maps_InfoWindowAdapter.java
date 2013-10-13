@@ -9,8 +9,8 @@ import android.widget.TextView;
 import com.google.android.gms.maps.GoogleMap.InfoWindowAdapter;
 import com.google.android.gms.maps.model.Marker;
 import com.licryle.veliby.R;
-import com.licryle.veliby.Station;
 import com.licryle.veliby.Util;
+import com.licryle.veliby.BikeMap.Station;
 
 public class Maps_InfoWindowAdapter implements InfoWindowAdapter {
 	private View mInfoView;

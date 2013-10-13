@@ -8,6 +8,11 @@ import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.List;
 
+import android.content.Context;
+
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesUtil;
+
 public abstract class Util {
 	public static String readFile( String file ) throws IOException {
     BufferedReader reader = new BufferedReader( new FileReader (file));
@@ -51,4 +56,14 @@ public abstract class Util {
 
 		return (int) ((i < 0) ? (iMax + i) : i);
 	}
+
+  public static boolean hasPlayServices(Context mContext) {
+    int iStatus = GooglePlayServicesUtil.
+        isGooglePlayServicesAvailable(mContext.getApplicationContext());
+    if (iStatus != ConnectionResult.SUCCESS) {
+      return false;
+    }
+
+    return true;
+  }
 }

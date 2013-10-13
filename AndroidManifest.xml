@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.licryle.veliby"
-    android:versionCode="3"
-    android:versionName="1.2" >
+    android:versionCode="4"
+    android:versionName="1.2.1" >
 
   <uses-sdk
       android:minSdkVersion="8"
@@ -44,7 +44,7 @@
           </intent-filter>
       </activity>
         
-      <service android:name=".DownloadService"/>
+      <service android:name="com.licryle.veliby.BikeMap.DownloadStationsService"/>
 
       <meta-data
 	        android:name="com.google.android.maps.v2.API_KEY"
