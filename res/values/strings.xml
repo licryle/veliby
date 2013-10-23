@@ -15,6 +15,8 @@
     <string name="welcome_few">1&#8211;2 vélos/points d\'attache, déconseillé&#8230;</string>
     <string name="welcome_none">Pas de vélos/points d\'attache :(</string>
     <string name="welcome_closed">Station fermée</string>
+    <string name="welcome_faved">Station faisant partie de vos favoris. Utilisez un widget pour voire la liste.</string>
+    <string name="welcome_unfaved">Station ne faisant pas partie de vos favoris.</string>
 
     <string name="welcome_controls">N\'hésitez pas à cliquer sur une station pour avoir plus d\'informations!
         
@@ -26,11 +28,15 @@ Enfin, 2 boutons vous permettent de contrôler l\'app:</string>
     <string name="action_mode">Mode d\'affichage</string>
     <string name="action_mode_find">Vélos disponibles</string>
     <string name="action_mode_return">Points d\'attaches disponibles</string>
+    <string name="action_help">Aide</string>
 
     <string name="action_reload">Mettre à jour</string>
     <string name="action_reload_start">Mise à jour en cours</string>
     <string name="action_reload_complete">Mise à jour terminée</string>
     <string name="action_reload_failure">Mise à jour échouée: veuillez vérifier votre connection internet</string>
+    
+    <string name="action_faved">Station maintenant favorite, retrouvez la sur un widget</string>
+    <string name="action_unfaved">Station retirée de vos favoris</string>
 
     <string name="welcome_ok">Compris!</string>
 
@@ -42,6 +48,8 @@ Enfin, 2 boutons vous permettent de contrôler l\'app:</string>
     <string name="infoview_bank">Station disposant d\'une borne achat de 
         ticket/rechargement de forfaits.</string>
     <string name="infoview_stationclosed">Station fermée!</string>
+    <string name="infoview_noinfo">Information indisponible</string>
+    <string name="infoview_favorite">Station favorite</string>
     
     <string-array name="color_mode_array">
         <item>Trouver un vélo</item>

@@ -19,7 +19,7 @@ public class WelcomeDialog extends DialogFragment {
 
     // Inflate and set the layout for the dialog
     // Pass null as the parent view because its going in the dialog layout
-    builder.setView(inflater.inflate(R.layout.welcome_dialog, null))
+    builder.setView(inflater.inflate(R.layout.dialog_help, null))
     		.setPositiveButton(R.string.welcome_ok,
 		    		new DialogInterface.OnClickListener() {
 		        	public void onClick(DialogInterface dialog, int id) {

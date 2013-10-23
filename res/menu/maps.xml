@@ -15,4 +15,11 @@
         android:icon="@drawable/ic_menu_upload"
         android:title="@string/action_mode"/>
 
+    <item
+        android:id="@+id/action_help"
+        android:orderInCategory="100"
+        veliby:showAsAction="always"
+        android:icon="@drawable/ic_menu_help"
+        android:title="@string/action_help"/>
+
 </menu>

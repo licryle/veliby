@@ -220,5 +220,105 @@
 	            android:layout_width="0dp"
 	            android:layout_weight="8" />
 	    </LinearLayout>
+	    
+
+	    <LinearLayout
+	        android:id="@+id/infoview_row_bonus"
+	        android:layout_width="match_parent"
+	        android:layout_height="wrap_content"
+	        android:layout_marginTop="10dp" >
+	
+	        <ImageView
+	            android:id="@+id/infoview_bonusimg"
+	            android:layout_width="0dp"
+	            android:layout_height="wrap_content"
+	            android:layout_weight="1"
+	            android:contentDescription="@string/refresh"
+	            android:src="@drawable/ic_input_add" />
+	
+	        <TextView
+	            android:id="@+id/infoview_bonus"
+	            android:layout_height="wrap_content"
+	            android:layout_gravity="center_horizontal"
+	            android:gravity="left"
+	            android:text="@string/infoview_bonus"
+	            android:layout_width="0dp"
+	            android:layout_weight="8" />
+	    </LinearLayout>
+	
+	    <LinearLayout
+	        android:id="@+id/infoview_row_bank"
+	        android:layout_width="match_parent"
+	        android:layout_height="wrap_content"
+	        android:layout_marginTop="10dp"
+	        android:layout_marginBottom="10dp" >
+	
+	        <ImageView
+	            android:id="@+id/infoview_bankimg"
+	            android:layout_width="0dp"
+	            android:layout_height="wrap_content"
+	            android:layout_weight="1"
+	            android:contentDescription="@string/refresh"
+	            android:src="@drawable/ic_coins_l" />
+	
+	        <TextView
+	            android:id="@+id/infoview_bank"
+	            android:layout_height="wrap_content"
+	            android:layout_gravity="center_horizontal"
+	            android:gravity="left"
+	            android:text="@string/infoview_bank"
+	            android:layout_width="0dp"
+	            android:layout_weight="8" />
+	    </LinearLayout>
+  
+      <LinearLayout
+          android:id="@+id/infoview_row_unfaved"
+          android:layout_width="match_parent"
+          android:layout_height="wrap_content"
+          android:layout_marginTop="10dp"
+          android:layout_marginBottom="10dp" >
+  
+          <ImageView
+              android:id="@+id/infoview_unfavedkimg"
+              android:layout_width="0dp"
+              android:layout_height="wrap_content"
+              android:layout_weight="1"
+              android:contentDescription="@string/refresh"
+              android:src="@drawable/rate_star_big_off_holo_dark" />
+  
+          <TextView
+              android:id="@+id/infoview_unfaved"
+              android:layout_height="wrap_content"
+              android:layout_gravity="center_horizontal"
+              android:gravity="left"
+              android:text="@string/welcome_unfaved"
+              android:layout_width="0dp"
+              android:layout_weight="8" />
+      </LinearLayout>
+  
+      <LinearLayout
+          android:id="@+id/infoview_row_faved"
+          android:layout_width="match_parent"
+          android:layout_height="wrap_content"
+          android:layout_marginTop="10dp"
+          android:layout_marginBottom="10dp" >
+  
+          <ImageView
+              android:id="@+id/infoview_favedimg"
+              android:layout_width="0dp"
+              android:layout_height="wrap_content"
+              android:layout_weight="1"
+              android:contentDescription="@string/refresh"
+              android:src="@drawable/rate_star_big_on_holo_dark" />
+  
+          <TextView
+              android:id="@+id/infoview_faved"
+              android:layout_height="wrap_content"
+              android:layout_gravity="center_horizontal"
+              android:gravity="left"
+              android:text="@string/welcome_faved"
+              android:layout_width="0dp"
+              android:layout_weight="8" />
+      </LinearLayout>
 	  </LinearLayout>
 </ScrollView>

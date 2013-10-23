@@ -4,7 +4,7 @@
     <dimen name="activity_horizontal_margin">0dp</dimen>
     <dimen name="activity_vertical_margin">0dp</dimen>
 
-    <dimen name="infoview_nbbikes">50sp</dimen>
+    <dimen name="infoview_nbbikes">60sp</dimen>
     <dimen name="infoview_title">20sp</dimen>
 
 </resources>

@@ -9,6 +9,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.StreamCorruptedException;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Map;
@@ -22,19 +23,24 @@ import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.ResultReceiver;
+import android.view.View;
 
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.GoogleMap.InfoWindowAdapter;
+import com.google.android.gms.maps.GoogleMap.OnMapClickListener;
+import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.licryle.veliby.R;
 import com.licryle.veliby.Util;
-import com.licryle.veliby.UI.Maps_InfoWindowAdapter;
 
-public class BikeMap {
+public class BikeMap implements OnMarkerClickListener, OnMapClickListener,
+    InfoWindowAdapter {
 	private GoogleMap _mMap;
 
 	protected Activity _mContext = null;
@@ -64,6 +70,7 @@ public class BikeMap {
     _mListeners = new ArrayList<BikeMapListener>();
 
     _mMap = mMap;
+    _mMap.setInfoWindowAdapter(this);
     _mContext = mContext;
     _mStationsDataFile = mStationsDataFile;
 
@@ -71,6 +78,7 @@ public class BikeMap {
     setupMap();
 	}
 
+  @SuppressWarnings("unchecked")
   public boolean loadStaticInfo() {
     try {
       FileInputStream mInput = new FileInputStream(_mStationsDataFile);
@@ -81,13 +89,17 @@ public class BikeMap {
     } catch (FileNotFoundException e) {
       e.printStackTrace();
     } catch (StreamCorruptedException e) {
-      // TODO Auto-generated catch block
+      _mStationsDataFile.delete();
       e.printStackTrace();
     } catch (IOException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
     } catch (ClassNotFoundException e) {
       // We changed version, let's delete that file
+      _mStationsDataFile.delete();
+      e.printStackTrace();
+    } catch (Exception e) {
+      // In doubt, call the shots
       _mStationsDataFile.delete();
       e.printStackTrace();
     }
@@ -111,14 +123,133 @@ public class BikeMap {
 
     intent.putExtra("url", sUrl);
     intent.putExtra("full_cycle", bFullCycle);
-    intent.putExtra("receiver", new DownloadReceiver(new Handler()));
+    intent.putExtra("receiver", new DownloadStationsReceiver(new Handler()));
 
     _mContext.startService(intent);
     return true;
   }
 
-  private class DownloadReceiver extends ResultReceiver{
-    public DownloadReceiver(Handler handler) {
+  public void updateCamera(CameraUpdate mCameraUpdate) {
+    _mMap.animateCamera(mCameraUpdate, 700, null);
+  }
+
+  protected void updateMarkers() {
+    if (_mMap == null) return;
+    
+    _mMap.clear();
+    Iterator<Map.Entry<Integer, Station>> it = _mStations.entrySet().
+        iterator();
+
+    while (it.hasNext()) {
+      Map.Entry<Integer, Station> entry = it.next();
+      Station mStation = entry.getValue();
+
+      MarkerOptions mOpts = new MarkerOptions();
+      mOpts.position(mStation.getPosition());
+      mOpts.title(mStation.getName());
+      
+      int id = mStation.getId();
+      mOpts.title(String.valueOf(id));
+
+      int iIcon;
+      if (! mStation.isOpened()) {
+        iIcon = R.drawable.presence_offline;
+      } else {
+        int iBikes = (_bModeFindBike) ?
+             mStation.getAvailableBikes() :
+             mStation.getAvailableBikeStands();
+
+        iIcon = Util.resolveResourceFromNumber(_mBikeResources, iBikes);
+      }
+
+      mOpts.icon(BitmapDescriptorFactory.fromResource(iIcon));
+      _mMap.addMarker(mOpts);
+    }
+  }
+
+
+  protected boolean setupMap() {
+    if (_mMap == null) return false;
+
+    _mMap.setMyLocationEnabled(true);
+    _mMap.setOnMarkerClickListener(this);
+    _mMap.setOnMapClickListener(this);
+
+    LocationManager lm = (LocationManager) _mContext.getSystemService(
+        Context.LOCATION_SERVICE);
+    Criteria crit = new Criteria();
+    crit.setAccuracy(Criteria.ACCURACY_FINE);
+    String provider = lm.getBestProvider(crit, true);
+    Location lastKnownLocation = lm.getLastKnownLocation(provider);
+    if (lastKnownLocation != null) {
+      LatLng ll = new LatLng(lastKnownLocation.getLatitude(),
+          lastKnownLocation.getLongitude());
+
+      CameraUpdate cu = CameraUpdateFactory.newCameraPosition(
+          new CameraPosition(ll, 16, 0, 0));
+      updateCamera(cu);
+    }
+
+    updateMarkers();
+
+    return true;
+  }
+
+  @Override
+  public boolean onMarkerClick(Marker mMarker) {
+    String sStationId = mMarker.getTitle();
+    Station mStation = _mStations.get(Integer.valueOf(sStationId));
+
+    dispatchOnStationClick(mStation);
+    return false;
+  }
+
+  @Override
+  public void onMapClick(LatLng mLatLng) {
+    dispatchOnMapClick(mLatLng); 
+  }
+
+  public void registerBikeMapListener(BikeMapListener mListener) {
+    _mListeners.add(mListener);
+  }
+
+  protected void dispatchOnStationClick(Station mStation) {
+    for (BikeMapListener mListener: _mListeners) {
+      mListener.onStationClick(this, mStation);
+    }
+  }
+
+  protected void dispatchOnMapClick(LatLng mLatLng) {
+    for (BikeMapListener mListener: _mListeners) {
+      mListener.onMapClick(this, mLatLng);
+    }
+  }
+
+  protected void dispatchOnDownloadFailure() {
+    for (BikeMapListener mListener: _mListeners) {
+      mListener.onDownloadFailure(this);
+    }
+  }
+
+  protected void dispatchOnDownloadSuccess() {
+    for (BikeMapListener mListener: _mListeners) {
+      mListener.onDownloadSuccess(this);
+    }
+  }
+
+  protected View dispatchOnGetInfoContents(Marker mMarker, Station mStation) {
+    View mResult = null;
+    for (BikeMapListener mListener: _mListeners) {
+      mResult = mListener.onGetInfoContents(mMarker, mStation);
+    }
+
+    return mResult;
+  }
+
+
+
+  private class DownloadStationsReceiver extends ResultReceiver{
+    public DownloadStationsReceiver(Handler handler) {
       super(handler);
     }
 
@@ -151,7 +282,7 @@ public class BikeMap {
               while (it.hasNext()) {
                 Map.Entry<Integer, Station> entry = it.next();
                 Station mStation = entry.getValue();
-                mStation.update(false, 0, 0);
+                mStation.update(false, 0, 0, null);
               }
   
               mObjectStream.writeObject(mResult);
@@ -171,7 +302,8 @@ public class BikeMap {
               if (mStationToUp != null) {
                 mStationToUp.update(mStation.getValue().isOpened(),
                     mStation.getValue().getAvailableBikes(),
-                    mStation.getValue().getAvailableBikeStands());
+                    mStation.getValue().getAvailableBikeStands(),
+                    Calendar.getInstance().getTime());
               }
             }
           }
@@ -191,80 +323,18 @@ public class BikeMap {
     }
   }
 
-  protected void updateMarkers() {
-    if (_mStations == null || _mMap == null) return;
-    
-    _mMap.clear();
-    Iterator<Map.Entry<Integer, Station>> it = _mStations.entrySet().
-        iterator();
 
-    while (it.hasNext()) {
-      Map.Entry<Integer, Station> entry = it.next();
-      Station mStation = entry.getValue();
 
-      MarkerOptions mOpts = new MarkerOptions();
-      mOpts.position(mStation.getPosition());
-      mOpts.title(mStation.getName());
-      
-      int id = mStation.getId();
-      mOpts.snippet(String.valueOf(id));
+  @Override
+  public View getInfoContents(Marker mMarker) {
+    String sStationId = mMarker.getTitle();
+    Station mStation = _mStations.get(Integer.valueOf(sStationId));
 
-      int iIcon;
-      if (! mStation.isOpened()) {
-        iIcon = R.drawable.presence_offline;
-      } else {
-        int iBikes = (_bModeFindBike) ?
-             mStation.getAvailableBikes() :
-             mStation.getAvailableBikeStands();
-
-        iIcon = Util.resolveResourceFromNumber(_mBikeResources, iBikes);
-      }
-
-      mOpts.icon(BitmapDescriptorFactory.fromResource(iIcon));
-      _mMap.addMarker(mOpts);
-    }
+    return dispatchOnGetInfoContents(mMarker, mStation);
   }
 
-
-  private boolean setupMap() {
-    if (_mMap == null) return false;
-
-    _mMap.setMyLocationEnabled(true);
-    _mMap.setInfoWindowAdapter(new Maps_InfoWindowAdapter(_mContext, _mStations));
-
-    LocationManager lm = (LocationManager) _mContext.getSystemService(
-        Context.LOCATION_SERVICE);
-    Criteria crit = new Criteria();
-    crit.setAccuracy(Criteria.ACCURACY_FINE);
-    String provider = lm.getBestProvider(crit, true);
-    Location lastKnownLocation = lm.getLastKnownLocation(provider);
-    if (lastKnownLocation != null) {
-      LatLng ll = new LatLng(lastKnownLocation.getLatitude(),
-          lastKnownLocation.getLongitude());
-
-      CameraUpdate cu = CameraUpdateFactory.newCameraPosition(
-          new CameraPosition(ll, 16, 0, 0));
-      _mMap.animateCamera(cu, 700, null);
-    }
-
-    updateMarkers();
-
-    return true;
-  }
-
-  public void registerBikeMapListener(BikeMapListener mListener) {
-    _mListeners.add(mListener);
-  }
-
-  protected void dispatchOnDownloadFailure() {
-    for (BikeMapListener mListener: _mListeners) {
-      mListener.OnDownloadFailure(this);
-    }
-  }
-
-  protected void dispatchOnDownloadSuccess() {
-    for (BikeMapListener mListener: _mListeners) {
-      mListener.OnDownloadSuccess(this);
-    }
+  @Override
+  public View getInfoWindow(Marker mMarker) {
+    return null;
   }
 }

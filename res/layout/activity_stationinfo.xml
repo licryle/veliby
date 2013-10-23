@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/infoview_map"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="#DDFFFFFF" >
+
+    <TextView
+        android:id="@+id/infoview_stationclosed"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:text="@string/infoview_stationclosed"
+        android:textSize="@dimen/infoview_title"
+        android:textColor="#FFFF0000"
+        android:textStyle="bold|italic"
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="10dp" />
+
+    <TextView
+        android:id="@+id/infoview_noinfo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:text="@string/infoview_noinfo"
+        android:textSize="@dimen/infoview_title"
+        android:textColor="#FF666666"
+        android:textStyle="bold|italic"
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="10dp" />
+
+    <LinearLayout
+        android:id="@+id/infoview_row_bike"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:weightSum="2"
+        android:layout_marginLeft="15dp"
+        android:layout_marginRight="15dp"
+        android:clickable="true" >
+        
+
+      <ImageView
+          android:id="@+id/infoview_favorite"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:layout_gravity="center_vertical"
+          android:contentDescription="@string/infoview_favorite"
+          android:src="@drawable/rate_star_big_on_holo_dark"
+          android:clickable="true" />
+
+	    <LinearLayout
+	        android:id="@+id/infoview_col_findbike"
+	        android:orientation="horizontal"
+          android:layout_height="wrap_content"
+          android:layout_weight="1"
+          android:layout_width="0dp"
+          android:gravity="center_horizontal" >
+
+        <ImageView
+            android:id="@+id/infoview_bikeimg"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:contentDescription="@string/action_mode_find"
+            android:src="@drawable/ic_menu_upload" />
+
+        <TextView
+            android:id="@+id/infoview_bikes"
+            android:layout_height="wrap_content"
+            android:text="0"
+            android:textSize="@dimen/infoview_nbbikes"
+            android:layout_width="wrap_content" />
+      </LinearLayout>
+
+	    <LinearLayout
+	        android:id="@+id/infoview_col_returnbike"
+	        android:orientation="horizontal"
+          android:layout_height="wrap_content"
+          android:layout_weight="1"
+          android:layout_width="0dp"
+          android:gravity="center_horizontal">
+
+        <ImageView
+            android:id="@+id/infoview_bikestandimg"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:contentDescription="@string/action_mode_return"
+            android:src="@drawable/ic_menu_goto" />
+
+        <TextView
+            android:id="@+id/infoview_stands"
+            android:layout_height="wrap_content"
+            android:text="0"
+            android:textSize="@dimen/infoview_nbbikes"
+            android:layout_width="wrap_content" />
+      </LinearLayout>
+    </LinearLayout>
+
+</LinearLayout>

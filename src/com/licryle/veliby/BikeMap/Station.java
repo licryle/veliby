@@ -147,10 +147,11 @@ public class Station implements Serializable {
 
 	public boolean iShallow() { return _bShallow; }
 
-	public void update(boolean bStatus, int iAvBikes, int iAvBikeStands) {
+	public void update(boolean bStatus, int iAvBikes, int iAvBikeStands, 
+	    Date mLastUpdate) {
 		_bOpened = bStatus;
 		_iAvBikes = iAvBikes;
 		_iAvBikeStands = iAvBikeStands;
-		_mLastUpdate = Calendar.getInstance().getTime();
+		_mLastUpdate = mLastUpdate;
 	}
 }
