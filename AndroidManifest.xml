@@ -49,5 +49,18 @@
       <meta-data
 	        android:name="com.google.android.maps.v2.API_KEY"
 	        android:value="AIzaSyCTL_7B0sdMYQtFSu2Zkn-EoFxJJDMfrzk" />
+
+		  <receiver android:name="com.licryle.veliby.FavStationWidget.Provider" >
+		    <intent-filter>
+		        <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+		        <action android:name="com.licryle.veliby.favstationwidget.WIDGET_UPDATE" />
+		    </intent-filter>
+		    <meta-data android:name="android.appwidget.provider"
+		               android:resource="@xml/widget_favstations" />
+
+        <meta-data android:name="LauncherMetadata.Requirements.Scrollable"
+                   android:value="true" />
+		  </receiver>
+
     </application>
 </manifest>

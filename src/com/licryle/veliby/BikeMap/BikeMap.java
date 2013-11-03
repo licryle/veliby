@@ -1,15 +1,7 @@
 package com.licryle.veliby.BikeMap;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.StreamCorruptedException;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Map;
@@ -48,7 +40,7 @@ public class BikeMap implements OnMarkerClickListener, OnMapClickListener,
 
   protected boolean	_bModeFindBike = true;
   protected boolean	_bDownloading = false;
-  protected Hashtable<Integer, Station> _mStations;
+  protected Stations _mStations;
 
   protected ArrayList<BikeMapListener> _mListeners; 
 
@@ -65,8 +57,8 @@ public class BikeMap implements OnMarkerClickListener, OnMapClickListener,
 			};
 
 
-	public BikeMap(Activity mContext, File mStationsDataFile, GoogleMap mMap) {
-    _mStations = new Hashtable<Integer, Station>();
+	public BikeMap(Activity mContext, File mStationsDataFile, GoogleMap mMap,
+	    int iDeadLine) {
     _mListeners = new ArrayList<BikeMapListener>();
 
     _mMap = mMap;
@@ -74,39 +66,9 @@ public class BikeMap implements OnMarkerClickListener, OnMapClickListener,
     _mContext = mContext;
     _mStationsDataFile = mStationsDataFile;
 
-    loadStaticInfo();
+    _mStations = Stations.loadStationsInfo(_mStationsDataFile, iDeadLine);
     setupMap();
 	}
-
-  @SuppressWarnings("unchecked")
-  public boolean loadStaticInfo() {
-    try {
-      FileInputStream mInput = new FileInputStream(_mStationsDataFile);
-      ObjectInputStream mObjectStream = new ObjectInputStream(mInput);
-      _mStations = (Hashtable<Integer, Station>) mObjectStream.readObject();
-      mObjectStream.close();
-      return true;
-    } catch (FileNotFoundException e) {
-      e.printStackTrace();
-    } catch (StreamCorruptedException e) {
-      _mStationsDataFile.delete();
-      e.printStackTrace();
-    } catch (IOException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-    } catch (ClassNotFoundException e) {
-      // We changed version, let's delete that file
-      _mStationsDataFile.delete();
-      e.printStackTrace();
-    } catch (Exception e) {
-      // In doubt, call the shots
-      _mStationsDataFile.delete();
-      e.printStackTrace();
-    }
-
-    _mStations = new Hashtable<Integer, Station>();
-    return false;
-  }
 
   public boolean isDownloading() { return _bDownloading; }
   public boolean isFindBikeMode() { return _bModeFindBike; }
@@ -115,6 +77,8 @@ public class BikeMap implements OnMarkerClickListener, OnMapClickListener,
     updateMarkers();
   }
 
+  public Stations stations() { return _mStations; }
+
   public boolean downloadMarkers(boolean bFullCycle, String sUrl) {
     if (_bDownloading) return false;
     _bDownloading = true;
@@ -122,6 +86,7 @@ public class BikeMap implements OnMarkerClickListener, OnMapClickListener,
     Intent intent = new Intent(_mContext, DownloadStationsService.class);
 
     intent.putExtra("url", sUrl);
+    intent.putExtra("file", _mStationsDataFile.getAbsolutePath());
     intent.putExtra("full_cycle", bFullCycle);
     intent.putExtra("receiver", new DownloadStationsReceiver(new Handler()));
 
@@ -253,62 +218,15 @@ public class BikeMap implements OnMarkerClickListener, OnMapClickListener,
       super(handler);
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     protected void onReceiveResult(int resultCode, Bundle resultData) {
       super.onReceiveResult(resultCode, resultData);
 
       switch (resultCode) {
         case DownloadStationsService.SUCCESS:
-          if (resultData.getBoolean("full_cycle")) {
-            _mStations.clear();
-            Hashtable<Integer, Station> mResult = (Hashtable<Integer, Station>) 
-                resultData.getSerializable("stations");
-   
-            for (Map.Entry<Integer, Station> mStation : mResult.entrySet()) {
-              _mStations.put(mStation.getKey(), new Station(mStation.getValue()));
-            }
+          // date doesn't matter since it was just generated
+          _mStations = (Stations) resultData.getSerializable("stations");
   
-            _mStationsDataFile.delete();
-            FileOutputStream mOutput;
-            try {
-              mOutput = new FileOutputStream(_mStationsDataFile);
-              ObjectOutputStream mObjectStream = new ObjectOutputStream(mOutput);
-   
-              // Nulling dynamic data for storage
-              Iterator<Map.Entry<Integer, Station>> it = mResult.entrySet().
-                  iterator();
-  
-              while (it.hasNext()) {
-                Map.Entry<Integer, Station> entry = it.next();
-                Station mStation = entry.getValue();
-                mStation.update(false, 0, 0, null);
-              }
-  
-              mObjectStream.writeObject(mResult);
-              mObjectStream.close();
-            } catch (FileNotFoundException e) {
-              e.printStackTrace();
-            } catch (IOException e) {
-              e.printStackTrace();
-              _mStationsDataFile.delete(); // TODO: this isn't reliable
-            }
-          } else {
-            Hashtable<Integer, Station> mResult = (Hashtable<Integer, Station>) 
-                resultData.getSerializable("stations");
-            for (Map.Entry<Integer, Station> mStation : mResult.entrySet()) {
-              Station mStationToUp = _mStations.get(mStation.getValue().getId());
-  
-              if (mStationToUp != null) {
-                mStationToUp.update(mStation.getValue().isOpened(),
-                    mStation.getValue().getAvailableBikes(),
-                    mStation.getValue().getAvailableBikeStands(),
-                    Calendar.getInstance().getTime());
-              }
-            }
-          }
-  
-          _bDownloading = false;
           updateMarkers();
           dispatchOnDownloadSuccess();
         break;
@@ -316,8 +234,11 @@ public class BikeMap implements OnMarkerClickListener, OnMapClickListener,
         case DownloadStationsService.FAILURE_CONNECTION:
         case DownloadStationsService.FAILURE_GENERIC:
         case DownloadStationsService.FAILURE_PARSE:
-          _bDownloading = false;
           dispatchOnDownloadFailure();
+        break;
+
+        case DownloadStationsService.FINISHED:
+          _bDownloading = false;
         break;
       }
     }

@@ -1,14 +1,14 @@
 package com.licryle.veliby.BikeMap;
 
 import java.io.Serializable;
-import java.util.Calendar;
-import java.util.Date;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import android.annotation.SuppressLint;
 import com.google.android.gms.maps.model.LatLng;
 
+@SuppressLint("DefaultLocale")
 public class Station implements Serializable {
   private static final long serialVersionUID = -967068502674805726L;
 
@@ -64,10 +64,10 @@ public class Station implements Serializable {
 	protected boolean _bOpened;
 	protected int _iAvBikes;
 	protected int _iAvBikeStands;
-	protected Date _mLastUpdate;
 
 	// Shallow: only contains dynamic data
-	protected boolean _bShallow;
+  protected boolean _bShallow;
+  protected boolean _bStaticOnly;
 
 	public Station(JSONObject mStation) throws JSONException {
 		_iNumber = mStation.getInt("number");
@@ -88,13 +88,14 @@ public class Station implements Serializable {
 		_bOpened = mStation.getString("status").equalsIgnoreCase("OPEN");
 		_iAvBikes = mStation.getInt("available_bikes");
 		_iAvBikeStands = mStation.getInt("available_bike_stands");
-		_mLastUpdate = new Date(mStation.getLong("last_update"));
 
 		_bShallow = false;
+		_bStaticOnly = false;
 	}
 
 	public Station(Station mOriginal) {
-		_bShallow = mOriginal.iShallow();
+		_bShallow = mOriginal.isShallow();
+		_bStaticOnly = mOriginal.isStaticOnly();
 
 		_iNumber = mOriginal.getNumber();
 		_iContract = mOriginal.getContract();
@@ -103,9 +104,8 @@ public class Station implements Serializable {
 		_bOpened = mOriginal.isOpened();
 		_iAvBikes = mOriginal.getAvailableBikes();
 		_iAvBikeStands = mOriginal.getAvailableBikeStands();
-		_mLastUpdate = mOriginal.getLastUpdate();
 
-		if (!iShallow()) {	
+		if (!isShallow()) {	
 			_sName = mOriginal.getName();
 			_sAddress = mOriginal.getAddress();
 	
@@ -126,15 +126,23 @@ public class Station implements Serializable {
 		_bOpened = bOpened;
 		_iAvBikes = iAvBikes;
 		_iAvBikeStands = iAvBikeStands;
-		_mLastUpdate = Calendar.getInstance().getTime();
 
 		_bShallow = true;
+		_bStaticOnly = false;
 	}
 
 	public int getNumber() { return _iNumber; }
 	public Contract getContract() { return _iContract; }
 	public int getId() { return _iId; }
 	public String getName() { return _sName; }
+	public String getFriendlyName() {
+	  String sTitle = this.getName();
+
+	  sTitle = sTitle.replaceAll("[0-9]+ - (.*)", "$1").toLowerCase();
+    sTitle = Character.toUpperCase(sTitle.charAt(0)) + sTitle.substring(1);
+
+    return sTitle;
+	}
 	public String getAddress() { return _sAddress; }
 	public LatLng getPosition() { return new LatLng(_dLat, _dLng); }
 	public boolean hasBanking() { return _bBanking; }
@@ -143,15 +151,19 @@ public class Station implements Serializable {
 	public boolean isOpened() { return _bOpened; }
 	public int getAvailableBikes() { return _iAvBikes; }
 	public int getAvailableBikeStands() { return _iAvBikeStands; }
-	public Date getLastUpdate() { return _mLastUpdate; }
 
-	public boolean iShallow() { return _bShallow; }
+  public boolean isShallow() { return _bShallow; }
+  public boolean isStaticOnly() { return _bStaticOnly; }
 
-	public void update(boolean bStatus, int iAvBikes, int iAvBikeStands, 
-	    Date mLastUpdate) {
+  public void removeDynamicData() {
+    update(false, 0, 0);
+    _bStaticOnly = true;
+  }
+
+	public void update(boolean bStatus, int iAvBikes, int iAvBikeStands) {
 		_bOpened = bStatus;
 		_iAvBikes = iAvBikes;
 		_iAvBikeStands = iAvBikeStands;
-		_mLastUpdate = mLastUpdate;
+		_bStaticOnly = false;
 	}
 }

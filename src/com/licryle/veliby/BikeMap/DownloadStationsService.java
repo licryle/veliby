@@ -2,12 +2,13 @@ package com.licryle.veliby.BikeMap;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.ConnectException;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.Hashtable;
+import java.util.Calendar;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -25,6 +26,7 @@ public class DownloadStationsService extends IntentService {
   public static final int FAILURE_CONNECTION = 8346;
   public static final int FAILURE_GENERIC = 8347;
   public static final int FAILURE_PARSE = 8348;
+  public static final int FINISHED = 8349;
   public DownloadStationsService() {
     super("DownloadService");
   }
@@ -35,6 +37,8 @@ public class DownloadStationsService extends IntentService {
     ResultReceiver mReceiver = (ResultReceiver) intent.
     		getParcelableExtra("receiver");
     boolean bFullCycle = intent.getBooleanExtra("full_cycle", true);
+    String sFile = intent.getStringExtra("file");
+    File mFile = new File(sFile);
 
     try {
       URL mUrl = new URL(sUrlToDownload);
@@ -67,66 +71,72 @@ public class DownloadStationsService extends IntentService {
       mInput.close();
 
       Bundle mResultData = new Bundle();
+      Stations mStations;
       if (bFullCycle) {
-        mResultData.putSerializable("stations", parseFullData(mOutput));
+        mStations = parseFullData(mOutput);
       } else {
-        mResultData.putSerializable("stations", parseDynamicData(mOutput));
+        mStations = parseDynamicData(mOutput, mFile);
       }
       mOutput.close();
 
-      mResultData.putBoolean("full_cycle", bFullCycle);
+      // Send result to process asking, write in background
+      mResultData.putSerializable("stations", mStations);
       mReceiver.send(SUCCESS, mResultData);
+      mStations.saveStationsInfo(mFile);
     } catch (ConnectException e) {
-      Bundle mResultData = new Bundle();
-      mReceiver.send(FAILURE_CONNECTION, mResultData);
-      return;
+      mReceiver.send(FAILURE_CONNECTION, new Bundle());
+      e.printStackTrace();
     } catch (IOException e) {
-      Bundle mResultData = new Bundle();
-      mReceiver.send(FAILURE_GENERIC, mResultData);
+      mReceiver.send(FAILURE_GENERIC, new Bundle());
       e.printStackTrace();
     } catch (Exception e) {
-      Bundle mResultData = new Bundle();
-      mReceiver.send(FAILURE_PARSE, mResultData);    	
+      mReceiver.send(FAILURE_PARSE, new Bundle());
+      e.printStackTrace();
     }
+    mReceiver.send(FINISHED, new Bundle());
+    stopSelf();
   }
 
-  protected Hashtable<Integer, Station> parseFullData(
-  		ByteArrayOutputStream mInput) throws JSONException {
+  protected Stations parseFullData(ByteArrayOutputStream mInput)
+      throws JSONException {
     String sInput = new String(mInput.toByteArray());
     JSONArray mJSon = new JSONArray(sInput);
   
-    Hashtable<Integer, Station> mNewStations =
-    		new Hashtable<Integer, Station>();
+    Stations mNewStations = new Stations();
     for (int i=0; i < mJSon.length(); i++) {
     	Station mStation = new Station(mJSon.getJSONObject(i));
     	mNewStations.put(mStation.getId(), mStation);
     }
+    mNewStations.setLastUpdate(Calendar.getInstance().getTime());
 
     return mNewStations;
   }
 
-  protected Hashtable<Integer, Station> parseDynamicData(
-  		ByteArrayOutputStream mInput) throws Exception {
+  protected Stations parseDynamicData(ByteArrayOutputStream mInput, File mFile)
+      throws Exception {
   	if (mInput.size() % 6 != 0) throw new Exception("Not rounded dynamic data");
 
   	byte aData[] = mInput.toByteArray();
   	int i = 0;
-  
-    Hashtable<Integer, Station> mNewStations =
-    		new Hashtable<Integer, Station>();
+
+    Stations mStations = Stations.loadStationsInfo(mFile, 10000);
   	while (i < mInput.size()) {
   		int iId = Util.intToUInt((new Byte(aData[i++])).intValue(), 8) +
   							Util.intToUInt((new Byte(aData[i++])).intValue() << 8, 16) +
   							Util.intToUInt((new Byte(aData[i++])).intValue() << 16, 32);
 
-  		int iAvBikes			= (new Byte(aData[i++])).intValue();
-  		int iAvBikeStands = (new Byte(aData[i++])).intValue();
-  		boolean bOpened 	= (new Byte(aData[i++])).intValue() == 1;
-  		
-  		Station mStation = new Station(iId, iAvBikes, iAvBikeStands, bOpened);
-    	mNewStations.put(mStation.getId(), mStation);
-  	}
+      Station mStationToUp = mStations.get(iId);
 
-    return mNewStations;
+      if (mStationToUp != null) {
+        int iAvBikes      = (new Byte(aData[i++])).intValue();
+        int iAvBikeStands = (new Byte(aData[i++])).intValue();
+        boolean bOpened   = (new Byte(aData[i++])).intValue() == 1;
+        
+        mStationToUp.update(bOpened, iAvBikes, iAvBikeStands);
+      }
+  	}
+  	mStations.setLastUpdate(Calendar.getInstance().getTime());
+
+    return mStations;
   }
 }

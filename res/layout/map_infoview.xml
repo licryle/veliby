@@ -20,7 +20,7 @@
         android:layout_marginBottom="5dp" />
 
     <LinearLayout
-        android:id="@+id/infoview_row_bike"
+        android:id="@+id/infoview_row_qualities"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"

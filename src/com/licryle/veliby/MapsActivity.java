@@ -1,16 +1,11 @@
 package com.licryle.veliby;
 
 import java.io.File;
-import java.sql.Date;
-import java.util.Calendar;
-import java.util.Hashtable;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.os.Environment;
 import android.support.v7.app.ActionBarActivity;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -30,9 +25,12 @@ import com.google.android.gms.maps.model.Marker;
 import com.licryle.veliby.BikeMap.BikeMap;
 import com.licryle.veliby.BikeMap.BikeMapListener;
 import com.licryle.veliby.BikeMap.Station;
+import com.licryle.veliby.BikeMap.Stations;
 
 public class MapsActivity extends ActionBarActivity implements BikeMapListener,
     android.view.View.OnClickListener {
+  protected static final String FAVSTATION_WIDGET_UPDATE =
+      "com.licryle.veliby.favstationwidget.WIDGET_UPDATE";
   protected BikeMap _mBikeMap = null;
   protected View _mStationInfo = null;
   protected View _mInfoView = null;
@@ -41,21 +39,7 @@ public class MapsActivity extends ActionBarActivity implements BikeMapListener,
 
   protected String _sFileStations = null;
   protected File _mStationsDataFile;
-  protected SharedPreferences _mSettings;
-  protected int _iStaticDeadline = 7;
-  public final String URL_FULL = "https://api.jcdecaux.com/vls/v1/stations?" +
-  		"contract=Paris&apiKey=718b4e0e0b1f01af842ff54c38bed00eaa63ce3c";
-  public final String URL_DYNAMIC = "http://veliby.berliat.fr/?c=1";
-  public final static Hashtable<Integer, Integer> mBikeResources = 
-      new Hashtable<Integer, Integer>() {
-        private static final long serialVersionUID = -6956564905991202734L;
-        {
-          put(0,R.color.infoview_nobike);
-          put(2,R.color.infoview_fewbikes);
-          put(4,R.color.infoview_somebikes);
-          put(1000,R.color.infoview_plentybikes);
-        }
-      };
+  protected Settings _mSettings;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -64,20 +48,19 @@ public class MapsActivity extends ActionBarActivity implements BikeMapListener,
     _mStationInfo = findViewById(R.id.map_infoview);
     _mStationInfo.findViewById(R.id.infoview_favorite).setOnClickListener(this);
     _mInfoView = getLayoutInflater().inflate(R.layout.map_infoview, null);
-    _mSettings = getPreferences(MODE_PRIVATE);
+    _mSettings = Settings.getInstance(this);
 
     firstStart();
 
-    File mAppDir = new File(
-        Environment.getExternalStorageDirectory().getPath() + "/Veliby/");
+    File mAppDir = _mSettings.getVelibyPath();
     mAppDir.mkdirs();
-    _mStationsDataFile = new File(mAppDir.getAbsolutePath() +
-        "/stations.comlete");
+    _mStationsDataFile = _mSettings.getStationsFile();
 
     GoogleMap mMap = ((SupportMapFragment) this.getSupportFragmentManager().
         findFragmentById(R.id.map)).getMap();
  
-    _mBikeMap = new BikeMap(this, _mStationsDataFile, mMap);
+    _mBikeMap = new BikeMap(this, _mStationsDataFile, mMap,
+        _mSettings.getDynamicDeadLine());
     _mBikeMap.registerBikeMapListener(this);
     
     if (! Util.hasPlayServices(this)) {
@@ -86,24 +69,28 @@ public class MapsActivity extends ActionBarActivity implements BikeMapListener,
     }
   }
 
-
 	@Override
   public boolean onCreateOptionsMenu(Menu menu) {
-      // Inflate the menu items for use in the action bar
-      MenuInflater inflater = getMenuInflater();
-      inflater.inflate(R.menu.maps, menu);
-      return super.onCreateOptionsMenu(menu);
+    // Inflate the menu items for use in the action bar
+    MenuInflater inflater = getMenuInflater();
+    inflater.inflate(R.menu.maps, menu);
+    return super.onCreateOptionsMenu(menu);
   }
 
-	protected void downloadMarkers() {
+	protected void downloadMarkers(boolean bManual) {
 	  if (_mBikeMap.isDownloading()) { return; }
-
-    lightMessage(R.string.action_reload_start, true);
  
-    if (isStaticDataExpired()) {
-      _mBikeMap.downloadMarkers(true, URL_FULL);
+    Stations mStations = _mBikeMap.stations();
+    if (mStations == null ||
+        mStations.isStaticExpired(_mSettings.getStaticDeadLine())) {
+      lightMessage(R.string.action_reload_start, true);
+      _mBikeMap.downloadMarkers(true, _mSettings.getURLDownloadFull());
     } else {
-      _mBikeMap.downloadMarkers(false, URL_DYNAMIC);
+      if (bManual ||
+          mStations.isDynamicExpired(_mSettings.getDynamicDeadLine())) {
+        lightMessage(R.string.action_reload_start, true);
+        _mBikeMap.downloadMarkers(false, _mSettings.getURLDownloadDynamic());
+      }
     }
 	}
 
@@ -112,7 +99,7 @@ public class MapsActivity extends ActionBarActivity implements BikeMapListener,
     // Handle presses on the action bar items
     switch (item.getItemId()) {
     case R.id.action_reload:
-      downloadMarkers();
+      downloadMarkers(true);
     return true;
 
     case R.id.action_help:
@@ -147,7 +134,7 @@ public class MapsActivity extends ActionBarActivity implements BikeMapListener,
   @Override
   public void onResume() {
   	super.onResume();
-  	downloadMarkers();
+  	downloadMarkers(false);
   }
 
   public void exitApp() {
@@ -172,36 +159,24 @@ public class MapsActivity extends ActionBarActivity implements BikeMapListener,
   protected void lightMessage(int iTextResource, boolean bLong) {
   	String sText = getResources().getString(iTextResource);
   	int iLength = bLong ? Toast.LENGTH_LONG : Toast.LENGTH_SHORT;
-  	Toast.makeText(getApplicationContext(), sText, iLength).show();  	
+  	Toast.makeText(getApplicationContext(), sText, iLength).show();
   }
  
   protected void firstStart() {
-  	if (! _mSettings.getBoolean("previously_started", false)) {
+  	if (_mSettings.isFirstStart()) {
   	  showHelpDialog();
 
-  		_mSettings.edit().putBoolean("previously_started", true).commit();
+  		_mSettings.firstStart();
   	}
-  }
-
-  private boolean isStaticDataExpired() {
-		if (!_mStationsDataFile.exists()) {
-			return true;
-		}
-
-	  Date mLastModified = new Date(_mStationsDataFile.lastModified());
-	  Calendar mDeadline = Calendar.getInstance();
-	  mDeadline.add(Calendar.DATE, -_iStaticDeadline);
-
-	  return mLastModified.before(mDeadline.getTime());
   }
 
 	protected void alertBox(String title, String mymessage,
   		OnClickListener onclick) {
     new AlertDialog.Builder(this)
-    			.setMessage(mymessage)
-    			.setTitle(title)
-    			.setNeutralButton(R.string.ok, onclick)
-    			.show();
+        .setMessage(mymessage)
+        .setTitle(title)
+        .setNeutralButton(R.string.ok, onclick)
+        .show();
   }
 
   protected void showStationInfo() {
@@ -224,20 +199,6 @@ public class MapsActivity extends ActionBarActivity implements BikeMapListener,
     _mStationInfo.setVisibility(View.GONE);
   }
 
-  protected boolean isStationFavorite(int iStationId) {
-    return _mSettings.getBoolean("favstation_" + iStationId, false);
-  }
-
-  protected void setStationFavorite(int iStationId, boolean bFavorite) {
-    String sKey = "favstation_" + iStationId;
-
-    if (!bFavorite) {
-      _mSettings.edit().remove(sKey).commit();
-    } else {
-      _mSettings.edit().putBoolean(sKey, true).commit();
-    }
-  }
-
   @Override
   public void onDownloadFailure(BikeMap mBikeMap) {
     lightMessage(R.string.action_reload_failure, true);    
@@ -256,7 +217,7 @@ public class MapsActivity extends ActionBarActivity implements BikeMapListener,
 
   @Override
   public void onStationClick(BikeMap mBikeMap, Station mStation) {
-    if (mStation.getLastUpdate() == null) {
+    if (mStation.isStaticOnly()) {
       _mStationInfo.findViewById(R.id.infoview_noinfo).
           setVisibility(View.VISIBLE);
 
@@ -297,7 +258,8 @@ public class MapsActivity extends ActionBarActivity implements BikeMapListener,
     TextView mBikes = (TextView) _mStationInfo.findViewById(R.id.infoview_bikes);
     mBikes.setText("" + iNbBikes);
 
-    int color = Util.resolveResourceFromNumber(mBikeResources, iNbBikes);
+    int color = Util.resolveResourceFromNumber(_mSettings.getBikeColors(),
+        iNbBikes);
     mBikes.setTextColor(getResources().getColor(color));
 
     // Return
@@ -306,7 +268,8 @@ public class MapsActivity extends ActionBarActivity implements BikeMapListener,
     mBikes = (TextView) _mStationInfo.findViewById(R.id.infoview_stands);
     mBikes.setText("" + iNbBikes);
 
-    color = Util.resolveResourceFromNumber(mBikeResources, iNbBikes);
+    color = Util.resolveResourceFromNumber(_mSettings.getBikeColors(),
+        iNbBikes);
     mBikes.setTextColor(getResources().getColor(color));
 
     showStationInfo();
@@ -317,10 +280,15 @@ public class MapsActivity extends ActionBarActivity implements BikeMapListener,
         R.id.infoview_favorite);
     int iIcon = R.drawable.rate_star_big_off_holo_dark;
 
-    if (isStationFavorite(_iStationShownId)) {
+    if (_mSettings.isStationFavorite(_iStationShownId)) {
       iIcon = R.drawable.rate_star_big_on_holo_dark;
     }
     mFavImg.setImageResource(iIcon);
+  }
+
+  protected void updateFavStationWidget() {
+    Intent intent = new Intent(FAVSTATION_WIDGET_UPDATE);
+    getApplicationContext().sendBroadcast(intent);
   }
 
 
@@ -328,8 +296,8 @@ public class MapsActivity extends ActionBarActivity implements BikeMapListener,
   public void onClick(View mView) {
     switch (mView.getId()) {
       case R.id.infoview_favorite:
-        boolean bNowFav = !isStationFavorite(_iStationShownId);
-        setStationFavorite(_iStationShownId, bNowFav);
+        boolean bNowFav = ! _mSettings.isStationFavorite(_iStationShownId);
+        _mSettings.setStationFavorite(_iStationShownId, bNowFav);
         updateFavoriteView();
 
         if (bNowFav) {
@@ -337,20 +305,17 @@ public class MapsActivity extends ActionBarActivity implements BikeMapListener,
         } else {
           lightMessage(R.string.action_unfaved, true);
         }
+
+        updateFavStationWidget();
       break;
     }
   }
 
-
   @Override
   public View onGetInfoContents(Marker mMarker, Station mStation) {
     // Take
-    String sTitle = mStation.getName();
-    sTitle = sTitle.replaceAll("[0-9]+ - (.*)", "$1").toLowerCase();
-    sTitle = Character.toUpperCase(sTitle.charAt(0)) + sTitle.substring(1);
-
     TextView mTitle = (TextView) _mInfoView.findViewById(R.id.infoview_title);
-    mTitle.setText(sTitle);
+    mTitle.setText(mStation.getFriendlyName());
 
     // Banking?
     int iVisibility = mStation.hasBanking() ? View.VISIBLE : View.GONE;
