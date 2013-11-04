@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.net.ConnectException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.ArrayList;
 import java.util.Calendar;
 
 import org.json.JSONArray;
@@ -19,6 +20,7 @@ import android.app.IntentService;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.ResultReceiver;
+import android.util.Log;
 
 public class DownloadStationsService extends IntentService {
   public static final int UPDATE_PROGRESS = 8344;
@@ -27,24 +29,50 @@ public class DownloadStationsService extends IntentService {
   public static final int FAILURE_GENERIC = 8347;
   public static final int FAILURE_PARSE = 8348;
   public static final int FINISHED = 8349;
+
+  protected ArrayList<ResultReceiver> _aRequesters;
+  protected Stations _mStations;
+
   public DownloadStationsService() {
     super("DownloadService");
+    Log.i("DownloadStationsService", "Entering Constructor()");
+
+    _aRequesters = new ArrayList<ResultReceiver>();
   }
 
-  @Override
-  protected void onHandleIntent(Intent intent) {
-    String sUrlToDownload = intent.getStringExtra("url");
-    ResultReceiver mReceiver = (ResultReceiver) intent.
-    		getParcelableExtra("receiver");
-    boolean bFullCycle = intent.getBooleanExtra("full_cycle", true);
-    String sFile = intent.getStringExtra("file");
-    File mFile = new File(sFile);
+  protected synchronized boolean _isConcurrent(ResultReceiver mReceiver) {
+    _aRequesters.add(mReceiver);
+ 
+    // we do not queue the Intent, we just register the requester
+    return (_aRequesters.size() > 1);
+  }
 
+  public int onStartCommand (Intent intent, int flags, int startId) {
+    ResultReceiver mReceiver = (ResultReceiver) 
+        intent.getParcelableExtra("receiver");
+ 
+    if (_isConcurrent(mReceiver)) return 0;
+
+    return super.onStartCommand(intent, flags, startId);
+  }
+
+  protected void _loadStations(File mStationsFile, int iDlDynamic) {
+    if (_mStations == null) {
+      _mStations = Stations.loadStationsInfo(mStationsFile, iDlDynamic);
+    }
+  }
+
+  protected int _downloadStations(boolean bFullCycle, String sUrlFull,
+      String sUrlDynamic, File mStationsFile) {
+    Log.i("DownloadStationsService", "Entering _downloadStations()");
     try {
-      URL mUrl = new URL(sUrlToDownload);
+      String sUrl = bFullCycle ? sUrlFull : sUrlDynamic;
+
+      URL mUrl = new URL(sUrl);
       URLConnection mConnection = mUrl.openConnection();
       mConnection.connect();
-      // this will be useful so that you can show a typical 0-100% progress bar
+
+      // For progress report
       int fileLength = mConnection.getContentLength();
 
       // download the file
@@ -60,10 +88,10 @@ public class DownloadStationsService extends IntentService {
         Bundle mResultData = new Bundle();
 
         if (fileLength > 0) {
-        	mResultData.putInt("progress", (int) (lTotal * 100 / fileLength));
+          mResultData.putInt("progress", (int) (lTotal * 100 / fileLength));
         }
 
-        mReceiver.send(UPDATE_PROGRESS, mResultData);
+        _dispatchResults(UPDATE_PROGRESS, mResultData);
         mOutput.write(aData, 0, iCount);
       }
 
@@ -71,33 +99,66 @@ public class DownloadStationsService extends IntentService {
       mInput.close();
 
       Bundle mResultData = new Bundle();
-      Stations mStations;
       if (bFullCycle) {
-        mStations = parseFullData(mOutput);
+        _parseFullData(mOutput);
       } else {
-        mStations = parseDynamicData(mOutput, mFile);
+        _parseDynamicData(mOutput);
       }
       mOutput.close();
 
       // Send result to process asking, write in background
-      mResultData.putSerializable("stations", mStations);
-      mReceiver.send(SUCCESS, mResultData);
-      mStations.saveStationsInfo(mFile);
+      mResultData.putSerializable("stations", _mStations);
+      _dispatchResults(SUCCESS, mResultData);
+      _mStations.saveStationsInfo(mStationsFile);
     } catch (ConnectException e) {
-      mReceiver.send(FAILURE_CONNECTION, new Bundle());
       e.printStackTrace();
+      return FAILURE_CONNECTION;
     } catch (IOException e) {
-      mReceiver.send(FAILURE_GENERIC, new Bundle());
       e.printStackTrace();
+      return FAILURE_GENERIC;
     } catch (Exception e) {
-      mReceiver.send(FAILURE_PARSE, new Bundle());
       e.printStackTrace();
+      return FAILURE_PARSE;
     }
-    mReceiver.send(FINISHED, new Bundle());
-    stopSelf();
+    return FINISHED;
   }
 
-  protected Stations parseFullData(ByteArrayOutputStream mInput)
+  @Override
+  protected void onHandleIntent(Intent intent) {
+    Log.i("DownloadStationsService", "Entering onHandleIntent()");
+    String sUrlFull = intent.getStringExtra("url_full");
+    String sUrlDynamic = intent.getStringExtra("url_dynamic");
+    String sStationsFile = intent.getStringExtra("stations_file");
+    File mStationsFile = new File(sStationsFile);
+    int iDlStatic = intent.getIntExtra("dl_static", 1000);
+    int iDlDynamic = intent.getIntExtra("dl_dynamic", 1000);
+
+    _loadStations(mStationsFile, iDlDynamic);
+
+    boolean bStaticExpired = _mStations.isStaticExpired(iDlStatic);
+    boolean bDynamicExpired = _mStations.isDynamicExpired(iDlDynamic);
+
+    int iResult;
+    if (bStaticExpired || bDynamicExpired) {
+      iResult = _downloadStations(bStaticExpired, sUrlFull, sUrlDynamic,
+          mStationsFile);
+    } else {
+      iResult = SUCCESS;
+    }
+
+    if (iResult == SUCCESS) {
+      Bundle mBundle = new Bundle();
+      mBundle.putSerializable("stations", _mStations);
+      _dispatchResults(iResult, mBundle);
+    } else {
+      _dispatchResults(iResult, null);
+    }
+
+    _aRequesters.clear();
+    Log.i("DownloadStationsService", "Leaving onHandleIntent()");
+  }
+
+  protected void _parseFullData(ByteArrayOutputStream mInput)
       throws JSONException {
     String sInput = new String(mInput.toByteArray());
     JSONArray mJSon = new JSONArray(sInput);
@@ -109,23 +170,22 @@ public class DownloadStationsService extends IntentService {
     }
     mNewStations.setLastUpdate(Calendar.getInstance().getTime());
 
-    return mNewStations;
+    _mStations = mNewStations;
   }
 
-  protected Stations parseDynamicData(ByteArrayOutputStream mInput, File mFile)
+  protected void _parseDynamicData(ByteArrayOutputStream mInput)
       throws Exception {
   	if (mInput.size() % 6 != 0) throw new Exception("Not rounded dynamic data");
 
   	byte aData[] = mInput.toByteArray();
   	int i = 0;
 
-    Stations mStations = Stations.loadStationsInfo(mFile, 10000);
   	while (i < mInput.size()) {
   		int iId = Util.intToUInt((new Byte(aData[i++])).intValue(), 8) +
   							Util.intToUInt((new Byte(aData[i++])).intValue() << 8, 16) +
   							Util.intToUInt((new Byte(aData[i++])).intValue() << 16, 32);
 
-      Station mStationToUp = mStations.get(iId);
+      Station mStationToUp = _mStations.get(iId);
 
       if (mStationToUp != null) {
         int iAvBikes      = (new Byte(aData[i++])).intValue();
@@ -135,8 +195,12 @@ public class DownloadStationsService extends IntentService {
         mStationToUp.update(bOpened, iAvBikes, iAvBikeStands);
       }
   	}
-  	mStations.setLastUpdate(Calendar.getInstance().getTime());
+  	_mStations.setLastUpdate(Calendar.getInstance().getTime());
+  }
 
-    return mStations;
+  protected void _dispatchResults(int iSignal, Bundle mBundle) {
+    for(ResultReceiver mReceiver : _aRequesters) {
+      mReceiver.send(iSignal, mBundle);
+    }
   }
 }

@@ -1,6 +1,7 @@
 package com.licryle.veliby.BikeMap;
 
 import java.io.File;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.Iterator;
@@ -14,7 +15,9 @@ import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Parcelable;
 import android.os.ResultReceiver;
+import android.util.Log;
 import android.view.View;
 
 import com.google.android.gms.maps.CameraUpdate;
@@ -29,6 +32,7 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.licryle.veliby.R;
+import com.licryle.veliby.Settings;
 import com.licryle.veliby.Util;
 
 public class BikeMap implements OnMarkerClickListener, OnMapClickListener,
@@ -40,9 +44,9 @@ public class BikeMap implements OnMarkerClickListener, OnMapClickListener,
 
   protected boolean	_bModeFindBike = true;
   protected boolean	_bDownloading = false;
-  protected Stations _mStations;
 
-  protected ArrayList<BikeMapListener> _mListeners; 
+  protected ArrayList<BikeMapListener> _mListeners;
+  protected Stations _mStations = null;
 
 
 	protected static Hashtable<Integer, Integer> _mBikeResources = 
@@ -66,30 +70,36 @@ public class BikeMap implements OnMarkerClickListener, OnMapClickListener,
     _mContext = mContext;
     _mStationsDataFile = mStationsDataFile;
 
-    _mStations = Stations.loadStationsInfo(_mStationsDataFile, iDeadLine);
     setupMap();
 	}
 
   public boolean isDownloading() { return _bDownloading; }
   public boolean isFindBikeMode() { return _bModeFindBike; }
+  public Stations stations() { return _mStations; }
+
   public void changeBikeMode(boolean bFindBike) {
     _bModeFindBike = bFindBike;
     updateMarkers();
   }
 
-  public Stations stations() { return _mStations; }
-
-  public boolean downloadMarkers(boolean bFullCycle, String sUrl) {
+  public boolean downloadMarkers() {
+    Log.i("BikeMap", "Entered downloadMarkers()");
     if (_bDownloading) return false;
     _bDownloading = true;
 
+    Settings mSettings = Settings.getInstance(_mContext);
     Intent intent = new Intent(_mContext, DownloadStationsService.class);
 
-    intent.putExtra("url", sUrl);
-    intent.putExtra("file", _mStationsDataFile.getAbsolutePath());
-    intent.putExtra("full_cycle", bFullCycle);
-    intent.putExtra("receiver", new DownloadStationsReceiver(new Handler()));
+    intent.putExtra("receiver",
+        (Parcelable) new DownloadStationsReceiver(new Handler()));
+    intent.putExtra("url_full", mSettings.getURLDownloadFull());
+    intent.putExtra("url_dynamic", mSettings.getURLDownloadDynamic());
+    intent.putExtra("dl_static", mSettings.getStaticDeadLine());
+    intent.putExtra("dl_dynamic", mSettings.getDynamicDeadLine());
+    intent.putExtra("stations_file",
+        mSettings.getStationsFile().getAbsolutePath());
 
+    Log.i("BikeMap", "Starting Intent in downloadMarkers()");
     _mContext.startService(intent);
     return true;
   }
@@ -99,7 +109,7 @@ public class BikeMap implements OnMarkerClickListener, OnMapClickListener,
   }
 
   protected void updateMarkers() {
-    if (_mMap == null) return;
+    if (_mMap == null || _mStations == null) return;
     
     _mMap.clear();
     Iterator<Map.Entry<Integer, Station>> it = _mStations.entrySet().
@@ -155,13 +165,13 @@ public class BikeMap implements OnMarkerClickListener, OnMapClickListener,
       updateCamera(cu);
     }
 
-    updateMarkers();
-
     return true;
   }
 
   @Override
   public boolean onMarkerClick(Marker mMarker) {
+    if (_mStations == null) return false;
+
     String sStationId = mMarker.getTitle();
     Station mStation = _mStations.get(Integer.valueOf(sStationId));
 
@@ -213,7 +223,13 @@ public class BikeMap implements OnMarkerClickListener, OnMapClickListener,
 
 
 
-  private class DownloadStationsReceiver extends ResultReceiver{
+  private class DownloadStationsReceiver extends ResultReceiver
+      implements Serializable{
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 5529673172741409950L;
+
     public DownloadStationsReceiver(Handler handler) {
       super(handler);
     }
@@ -224,21 +240,24 @@ public class BikeMap implements OnMarkerClickListener, OnMapClickListener,
 
       switch (resultCode) {
         case DownloadStationsService.SUCCESS:
+          Log.i("BikeMap", "onReceiveResult() SUCCESS");
           // date doesn't matter since it was just generated
           _mStations = (Stations) resultData.getSerializable("stations");
   
           updateMarkers();
           dispatchOnDownloadSuccess();
+          _bDownloading = false;
         break;
 
         case DownloadStationsService.FAILURE_CONNECTION:
         case DownloadStationsService.FAILURE_GENERIC:
         case DownloadStationsService.FAILURE_PARSE:
+          Log.i("BikeMap", "onReceiveResult() FAILURE_xxxx");
           dispatchOnDownloadFailure();
         break;
 
         case DownloadStationsService.FINISHED:
-          _bDownloading = false;
+          Log.i("BikeMap", "onReceiveResult() FINISHED");
         break;
       }
     }
@@ -248,6 +267,8 @@ public class BikeMap implements OnMarkerClickListener, OnMapClickListener,
 
   @Override
   public View getInfoContents(Marker mMarker) {
+    if (_mStations == null) return null;
+
     String sStationId = mMarker.getTitle();
     Station mStation = _mStations.get(Integer.valueOf(sStationId));
 

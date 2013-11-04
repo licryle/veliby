@@ -1,6 +1,7 @@
 package com.licryle.veliby;
 
 import java.io.File;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.Map;
@@ -9,7 +10,11 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Environment;
 
-public class Settings {
+public class Settings implements Serializable {
+  /**
+   * 
+   */
+  private static final long serialVersionUID = 7918647910557505183L;
   private static Settings _mInstance;
   protected Context _mContext;
   protected SharedPreferences _mPrefs;

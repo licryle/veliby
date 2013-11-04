@@ -1,5 +1,6 @@
 package com.licryle.veliby.FavStationWidget;
 import java.io.File;
+import java.io.Serializable;
 import java.util.ArrayList;
 
 import com.licryle.veliby.MapsActivity;
@@ -19,7 +20,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Parcelable;
 import android.os.ResultReceiver;
+import android.util.Log;
 import android.widget.RemoteViews;
 
 public class Provider extends AppWidgetProvider {
@@ -44,6 +47,7 @@ public class Provider extends AppWidgetProvider {
 
   public void onEnabled(Context context) {
     super.onEnabled(context);
+    Log.i("Provider", "Entering onEnabled()");
     _mContext = context;
 
     Settings mSettings = Settings.getInstance(context);
@@ -59,6 +63,7 @@ public class Provider extends AppWidgetProvider {
   }
 
   public void onDisabled(Context context) {
+    Log.i("Provider", "Entering onDisabled()");
     super.onDisabled(context);
     _mContext = context;
  
@@ -73,23 +78,11 @@ public class Provider extends AppWidgetProvider {
     _mContext = context;
 
     Settings mSettings = Settings.getInstance(context);
-    File mStationsDataFile = mSettings.getStationsFile();
 
     ArrayList<Integer> aFavStations = mSettings.getFavStations();
 
     if (aFavStations.size() > 0) {
-      Stations mStations = Stations.loadStationsInfo(mStationsDataFile,
-          mSettings.getStaticDeadLine());
-
-      if (mStations.isStaticExpired(mSettings.getStaticDeadLine())) {
-        _downloadMarkers(true);
-      } else {
-        if (mStations.isDynamicExpired(mSettings.getDynamicDeadLine())) {
-          _downloadMarkers(false);
-        } else {
-          _updateViews(mStations);
-        }
-      }
+      _downloadMarkers();
     }
   }
 
@@ -170,25 +163,35 @@ public class Provider extends AppWidgetProvider {
     return pendingIntent;
   }
 
-  private boolean _downloadMarkers(boolean bFullCycle) {
+  private boolean _downloadMarkers() {
+    Log.i("Provider", "Entering _downloadMarkers()");
     if (_bDownloading) return false;
     _bDownloading = true;
 
-    Intent intent = new Intent(_mContext, DownloadStationsService.class);
     Settings mSettings = Settings.getInstance(_mContext);
-    String sUrl = bFullCycle ? mSettings.getURLDownloadFull() :
-      mSettings.getURLDownloadDynamic();
+    Intent intent = new Intent(_mContext, DownloadStationsService.class);
 
-    intent.putExtra("url", sUrl);
-    intent.putExtra("file", mSettings.getStationsFile().getAbsolutePath());
-    intent.putExtra("full_cycle", bFullCycle);
-    intent.putExtra("receiver", new DownloadStationsReceiver(new Handler()));
+    intent.putExtra("receiver",
+        (Parcelable) new DownloadStationsReceiver(new Handler()));
+    intent.putExtra("url_full", mSettings.getURLDownloadFull());
+    intent.putExtra("url_dynamic", mSettings.getURLDownloadDynamic());
+    intent.putExtra("dl_static", mSettings.getStaticDeadLine());
+    intent.putExtra("dl_dynamic", mSettings.getDynamicDeadLine());
+    intent.putExtra("stations_file",
+        mSettings.getStationsFile().getAbsolutePath());
 
+    Log.i("Provider", "Starting download intent");
     _mContext.startService(intent);
+
     return true;
   }
 
-  private class DownloadStationsReceiver extends ResultReceiver{
+  private class DownloadStationsReceiver extends ResultReceiver implements Serializable{
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 8768846450342188871L;
+
     public DownloadStationsReceiver(Handler handler) {
       super(handler);
     }
@@ -199,19 +202,22 @@ public class Provider extends AppWidgetProvider {
 
       switch (resultCode) {
         case DownloadStationsService.SUCCESS:
+          Log.i("Provider", "onReceiveResult SUCCESS");
           // date doesn't matter since it was just generated
           Stations mStations = (Stations) resultData.getSerializable("stations");
 
           _updateViews(mStations);
+          _bDownloading = false;
         break;
 
         case DownloadStationsService.FAILURE_CONNECTION:
         case DownloadStationsService.FAILURE_GENERIC:
         case DownloadStationsService.FAILURE_PARSE:
+          Log.i("Provider", "onReceiveResult FAILURE_Xxxxx");
         break;
 
         case DownloadStationsService.FINISHED:
-          _bDownloading = false;
+          Log.i("Provider", "onReceiveResult FINISHED");
         break;
       }
     }

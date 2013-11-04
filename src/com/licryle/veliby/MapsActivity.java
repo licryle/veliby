@@ -7,6 +7,7 @@ import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -78,18 +79,19 @@ public class MapsActivity extends ActionBarActivity implements BikeMapListener,
   }
 
 	protected void downloadMarkers(boolean bManual) {
+	  Log.i("MapsActivity", "Entered downloadMarkers()");
 	  if (_mBikeMap.isDownloading()) { return; }
  
     Stations mStations = _mBikeMap.stations();
     if (mStations == null ||
         mStations.isStaticExpired(_mSettings.getStaticDeadLine())) {
       lightMessage(R.string.action_reload_start, true);
-      _mBikeMap.downloadMarkers(true, _mSettings.getURLDownloadFull());
+      _mBikeMap.downloadMarkers();
     } else {
       if (bManual ||
           mStations.isDynamicExpired(_mSettings.getDynamicDeadLine())) {
         lightMessage(R.string.action_reload_start, true);
-        _mBikeMap.downloadMarkers(false, _mSettings.getURLDownloadDynamic());
+        _mBikeMap.downloadMarkers();
       }
     }
 	}
