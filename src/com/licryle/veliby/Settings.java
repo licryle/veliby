@@ -21,6 +21,7 @@ public class Settings implements Serializable {
 
   protected int _iStaticDeadline = 7;
   protected int _iDyanmicDeadline = 3;
+  protected int _iWidgetUpdateFrequency = 10;
 
   protected final String URL_FULL = "https://api.jcdecaux.com/vls/v1/stations" +
       "?contract=Paris&apiKey=718b4e0e0b1f01af842ff54c38bed00eaa63ce3c";
@@ -104,6 +105,10 @@ catch (NameNotFoundException e) {}*/
 
   public int getDynamicDeadLine() {
     return _iDyanmicDeadline;
+  }
+
+  public int getWidgetUpdateFrequency() {
+    return _iWidgetUpdateFrequency;
   }
 
   public String getURLDownloadDynamic() {

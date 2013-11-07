@@ -11,5 +11,9 @@
     <dimen name="widget_station_stands">23sp</dimen>
     <dimen name="widget_station_title">23sp</dimen>
     <dimen name="widget_station_intwidth">32sp</dimen>
+    <dimen name="widget_stationclosed_width">128sp</dimen>
+    <dimen name="widget_stationclosed">23sp</dimen>
+    <dimen name="widget_info">16sp</dimen>
+    <dimen name="widget_title">16sp</dimen>
 
 </resources>

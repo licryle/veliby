@@ -7,7 +7,7 @@ import com.licryle.veliby.MapsActivity;
 import com.licryle.veliby.R;
 import com.licryle.veliby.Settings;
 import com.licryle.veliby.Util;
-import com.licryle.veliby.BikeMap.DownloadStationsService;
+import com.licryle.veliby.BikeMap.StationsInfoService;
 import com.licryle.veliby.BikeMap.Station;
 import com.licryle.veliby.BikeMap.Stations;
 
@@ -23,6 +23,7 @@ import android.os.Handler;
 import android.os.Parcelable;
 import android.os.ResultReceiver;
 import android.util.Log;
+import android.view.View;
 import android.widget.RemoteViews;
 
 public class Provider extends AppWidgetProvider {
@@ -58,7 +59,7 @@ public class Provider extends AppWidgetProvider {
         Context.ALARM_SERVICE);
     alarmManager.setRepeating(AlarmManager.RTC,
         System.currentTimeMillis() + 1000,
-        Settings.getInstance(context).getDynamicDeadLine() * 60000,
+        Settings.getInstance(context).getWidgetUpdateFrequency() * 60000,
         _createDataUpdateIntent(context));
   }
 
@@ -83,6 +84,8 @@ public class Provider extends AppWidgetProvider {
 
     if (aFavStations.size() > 0) {
       _downloadMarkers();
+    } else {
+      _updateViews(null);
     }
   }
 
@@ -91,23 +94,39 @@ public class Provider extends AppWidgetProvider {
         R.layout.widget_favstations_item);
     Settings mSettings = Settings.getInstance(_mContext);
 
-    // Take
-    int iNbBikes = mStation.isOpened() ? mStation.getAvailableBikes() : 0;
-    mStationView.setTextViewText(R.id.widget_station_bikes, "" + iNbBikes);
+    if (mStation.isOpened()) {
+      mStationView.setViewVisibility(R.id.widget_stationclosed, View.GONE);
+      mStationView.setViewVisibility(R.id.widget_station_bikeimg, View.VISIBLE);
+      mStationView.setViewVisibility(R.id.widget_station_bikes, View.VISIBLE);
+      mStationView.setViewVisibility(R.id.widget_station_bikestandimg,
+          View.VISIBLE);
+      mStationView.setViewVisibility(R.id.widget_station_stands, View.VISIBLE);
 
-    int color = Util.resolveResourceFromNumber(mSettings.getBikeColors(),
-        iNbBikes);
-    mStationView.setTextColor(R.id.widget_station_bikes,
-        _mContext.getResources().getColor(color));
+      // Take
+      int iNbBikes = mStation.isOpened() ? mStation.getAvailableBikes() : 0;
+      mStationView.setTextViewText(R.id.widget_station_bikes, "" + iNbBikes);
 
-    // Return
-    iNbBikes = mStation.isOpened() ? mStation.getAvailableBikeStands() : 0;
-    mStationView.setTextViewText(R.id.widget_station_stands, "" + iNbBikes);
+      int color = Util.resolveResourceFromNumber(mSettings.getBikeColors(),
+          iNbBikes);
+      mStationView.setTextColor(R.id.widget_station_bikes,
+          _mContext.getResources().getColor(color));
 
-    color = Util.resolveResourceFromNumber(mSettings.getBikeColors(),
-        iNbBikes);
-    mStationView.setTextColor(R.id.widget_station_stands,
-        _mContext.getResources().getColor(color));
+      // Return
+      iNbBikes = mStation.isOpened() ? mStation.getAvailableBikeStands() : 0;
+      mStationView.setTextViewText(R.id.widget_station_stands, "" + iNbBikes);
+
+      color = Util.resolveResourceFromNumber(mSettings.getBikeColors(),
+          iNbBikes);
+      mStationView.setTextColor(R.id.widget_station_stands,
+          _mContext.getResources().getColor(color));
+    } else {
+      mStationView.setViewVisibility(R.id.widget_stationclosed, View.VISIBLE);
+      mStationView.setViewVisibility(R.id.widget_station_bikeimg, View.GONE);
+      mStationView.setViewVisibility(R.id.widget_station_bikes, View.GONE);
+      mStationView.setViewVisibility(R.id.widget_station_bikestandimg,
+          View.GONE);
+      mStationView.setViewVisibility(R.id.widget_station_stands, View.GONE);      
+    }
 
     mStationView.setTextViewText(R.id.widget_station_title,
         mStation.getFriendlyName());
@@ -124,24 +143,41 @@ public class Provider extends AppWidgetProvider {
     //which layout to show on widget
     RemoteViews remoteViews = new RemoteViews(_mContext.getPackageName(),
         R.layout.widget_favstations);
-    remoteViews.removeAllViews(R.id.widget_main);
+    remoteViews.removeAllViews(R.id.widget_items_list);
+    remoteViews.setOnClickPendingIntent(R.id.widget_menu_refresh,
+        _createDataUpdateIntent(_mContext));
 
     Settings mSettings = Settings.getInstance(_mContext);
     ArrayList<Integer> aFavStations = mSettings.getFavStations();
-    for(Integer i : aFavStations) {
-      Station mStation = mStations.get(i);
 
-      Intent mIntent = new Intent(_mContext, MapsActivity.class);
-      mIntent.putExtra("fav_station", i);
-      PendingIntent mPendingIntent = PendingIntent.getActivity(_mContext, 0,
-          mIntent, 0);
+    if (aFavStations.size() == 0) {
+      remoteViews.setViewVisibility(R.id.widget_nofavstation, View.VISIBLE);
+      remoteViews.setViewVisibility(R.id.widget_noinfo, View.GONE);
+    } else {
+      remoteViews.setViewVisibility(R.id.widget_nofavstation, View.GONE);
 
-      RemoteViews mStationView = _buildStationView(mStation);
-      mStationView.setOnClickPendingIntent(R.id.widget_station_item, mPendingIntent);
+      if (mStations == null) {
+        remoteViews.setViewVisibility(R.id.widget_noinfo, View.VISIBLE);        
+      } else {
+        remoteViews.setViewVisibility(R.id.widget_noinfo, View.GONE);
 
-      remoteViews.addView(R.id.widget_main, mStationView);
-      /*Intent svcIntent = new Intent(context, Service.class);
-      remoteViews.setRemoteAdapter(R.id.widget_stationslist, svcIntent);*/
+        for(Integer i : aFavStations) {
+          Station mStation = mStations.get(i);
+    
+          Intent mIntent = new Intent(_mContext, MapsActivity.class);
+          mIntent.putExtra("fav_station", i);
+          PendingIntent mPendingIntent = PendingIntent.getActivity(_mContext,
+              0, mIntent, 0);
+    
+          RemoteViews mStationView = _buildStationView(mStation);
+          mStationView.setOnClickPendingIntent(R.id.widget_station_item,
+              mPendingIntent);
+    
+          remoteViews.addView(R.id.widget_items_list, mStationView);
+          /*Intent svcIntent = new Intent(context, Service.class);
+          remoteViews.setRemoteAdapter(R.id.widget_stationslist, svcIntent);*/
+        }
+      }
     }
 
     AppWidgetManager mWdgMgr = AppWidgetManager.getInstance(_mContext);
@@ -162,17 +198,14 @@ public class Provider extends AppWidgetProvider {
         PendingIntent.FLAG_UPDATE_CURRENT);
     return pendingIntent;
   }
-
-  private boolean _downloadMarkers() {
-    Log.i("Provider", "Entering _downloadMarkers()");
-    if (_bDownloading) return false;
-    _bDownloading = true;
-
+ 
+  private Intent _createDownloadMarkersIntent() {
     Settings mSettings = Settings.getInstance(_mContext);
-    Intent intent = new Intent(_mContext, DownloadStationsService.class);
+    Intent intent = new Intent(_mContext, StationsInfoService.class);
 
     intent.putExtra("receiver",
         (Parcelable) new DownloadStationsReceiver(new Handler()));
+    intent.putExtra("requestor", this.toString());
     intent.putExtra("url_full", mSettings.getURLDownloadFull());
     intent.putExtra("url_dynamic", mSettings.getURLDownloadDynamic());
     intent.putExtra("dl_static", mSettings.getStaticDeadLine());
@@ -180,13 +213,23 @@ public class Provider extends AppWidgetProvider {
     intent.putExtra("stations_file",
         mSettings.getStationsFile().getAbsolutePath());
 
+    return intent;
+  }
+
+  private boolean _downloadMarkers() {
+    Log.i("Provider", "Entering _downloadMarkers()");
+    if (_bDownloading) return false;
+    _bDownloading = true;
+
+
     Log.i("Provider", "Starting download intent");
-    _mContext.startService(intent);
+    _mContext.startService(_createDownloadMarkersIntent());
 
     return true;
   }
 
-  private class DownloadStationsReceiver extends ResultReceiver implements Serializable{
+  private class DownloadStationsReceiver extends ResultReceiver
+      implements Serializable{
     /**
      * 
      */
@@ -201,23 +244,26 @@ public class Provider extends AppWidgetProvider {
       super.onReceiveResult(resultCode, resultData);
 
       switch (resultCode) {
-        case DownloadStationsService.SUCCESS:
+        case StationsInfoService.SUCCESS:
           Log.i("Provider", "onReceiveResult SUCCESS");
           // date doesn't matter since it was just generated
-          Stations mStations = (Stations) resultData.getSerializable("stations");
+          Stations mStations = (Stations)resultData.getSerializable("stations");
 
           _updateViews(mStations);
           _bDownloading = false;
         break;
 
-        case DownloadStationsService.FAILURE_CONNECTION:
-        case DownloadStationsService.FAILURE_GENERIC:
-        case DownloadStationsService.FAILURE_PARSE:
+        case StationsInfoService.FAILURE_CONNECTION:
+        case StationsInfoService.FAILURE_GENERIC:
+        case StationsInfoService.FAILURE_PARSE:
           Log.i("Provider", "onReceiveResult FAILURE_Xxxxx");
+          _updateViews(null);
+          _bDownloading = false;
         break;
 
-        case DownloadStationsService.FINISHED:
+        case StationsInfoService.FINISHED:
           Log.i("Provider", "onReceiveResult FINISHED");
+          _bDownloading = false;
         break;
       }
     }

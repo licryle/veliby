@@ -15,7 +15,7 @@
         android:gravity="center"
         android:text="@string/infoview_stationclosed"
         android:textSize="@dimen/infoview_title"
-        android:textColor="#FFFF0000"
+        android:textColor="#DDFF0000"
         android:textStyle="bold|italic"
         android:layout_marginTop="10dp"
         android:layout_marginBottom="10dp" />

@@ -52,6 +52,9 @@ Enfin, 2 boutons vous permettent de contrôler l\'app:</string>
     <string name="infoview_noinfo">Information indisponible</string>
     <string name="infoview_favorite">Station favorite</string>
     
+    <string name="widget_stationclosed">Fermée</string>
+    <string name="widget_nofavstation">Aucune station favorite, ajoutez les dans Veliby</string>
+
     <string-array name="color_mode_array">
         <item>Trouver un vélo</item>
         <item>Rendre un vélo</item>

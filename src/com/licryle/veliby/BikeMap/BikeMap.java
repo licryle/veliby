@@ -88,10 +88,11 @@ public class BikeMap implements OnMarkerClickListener, OnMapClickListener,
     _bDownloading = true;
 
     Settings mSettings = Settings.getInstance(_mContext);
-    Intent intent = new Intent(_mContext, DownloadStationsService.class);
+    Intent intent = new Intent(_mContext, StationsInfoService.class);
 
     intent.putExtra("receiver",
         (Parcelable) new DownloadStationsReceiver(new Handler()));
+    intent.putExtra("requestor", this.toString());
     intent.putExtra("url_full", mSettings.getURLDownloadFull());
     intent.putExtra("url_dynamic", mSettings.getURLDownloadDynamic());
     intent.putExtra("dl_static", mSettings.getStaticDeadLine());
@@ -239,7 +240,7 @@ public class BikeMap implements OnMarkerClickListener, OnMapClickListener,
       super.onReceiveResult(resultCode, resultData);
 
       switch (resultCode) {
-        case DownloadStationsService.SUCCESS:
+        case StationsInfoService.SUCCESS:
           Log.i("BikeMap", "onReceiveResult() SUCCESS");
           // date doesn't matter since it was just generated
           _mStations = (Stations) resultData.getSerializable("stations");
@@ -249,15 +250,23 @@ public class BikeMap implements OnMarkerClickListener, OnMapClickListener,
           _bDownloading = false;
         break;
 
-        case DownloadStationsService.FAILURE_CONNECTION:
-        case DownloadStationsService.FAILURE_GENERIC:
-        case DownloadStationsService.FAILURE_PARSE:
+        case StationsInfoService.FAILURE_CONNECTION:
+        case StationsInfoService.FAILURE_GENERIC:
+        case StationsInfoService.FAILURE_PARSE:
           Log.i("BikeMap", "onReceiveResult() FAILURE_xxxx");
+
+          _mStations = (Stations) resultData.getSerializable("stations");
+
+          // we need this to display at least static data
+          updateMarkers();
+
           dispatchOnDownloadFailure();
+          _bDownloading = false;
         break;
 
-        case DownloadStationsService.FINISHED:
+        case StationsInfoService.FINISHED:
           Log.i("BikeMap", "onReceiveResult() FINISHED");
+          _bDownloading = false;
         break;
       }
     }
