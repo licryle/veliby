@@ -151,8 +151,14 @@ public class Provider extends AppWidgetProvider {
     ArrayList<Integer> aFavStations = mSettings.getFavStations();
 
     if (aFavStations.size() == 0) {
-      remoteViews.setViewVisibility(R.id.widget_nofavstation, View.VISIBLE);
       remoteViews.setViewVisibility(R.id.widget_noinfo, View.GONE);
+      remoteViews.setViewVisibility(R.id.widget_nofavstation, View.VISIBLE);
+
+      Intent mIntent = new Intent(_mContext, MapsActivity.class);
+      PendingIntent mPendingIntent = PendingIntent.getActivity(_mContext,
+          0, mIntent, 0);
+      remoteViews.setOnClickPendingIntent(R.id.widget_nofavstation,
+          mPendingIntent);
     } else {
       remoteViews.setViewVisibility(R.id.widget_nofavstation, View.GONE);
 
@@ -163,7 +169,7 @@ public class Provider extends AppWidgetProvider {
 
         for(Integer i : aFavStations) {
           Station mStation = mStations.get(i);
-    
+
           Intent mIntent = new Intent(_mContext, MapsActivity.class);
           mIntent.putExtra("fav_station", i);
           PendingIntent mPendingIntent = PendingIntent.getActivity(_mContext,

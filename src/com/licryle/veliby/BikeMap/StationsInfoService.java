@@ -51,11 +51,13 @@ public class StationsInfoService extends IntentService {
   }
 
   public int onStartCommand (Intent intent, int flags, int startId) {
-    ResultReceiver mReceiver = (ResultReceiver) 
-        intent.getParcelableExtra("receiver");
-    String sRequestor = intent.getStringExtra("requestor");
-
-    if (_isConcurrent(mReceiver, sRequestor)) return 0;
+    if (intent != null) {
+      ResultReceiver mReceiver = (ResultReceiver) 
+          intent.getParcelableExtra("receiver");
+      String sRequestor = intent.getStringExtra("requestor");
+  
+      if (_isConcurrent(mReceiver, sRequestor)) return 0;
+    }
 
     return super.onStartCommand(intent, flags, startId);
   }
@@ -130,6 +132,9 @@ public class StationsInfoService extends IntentService {
   @Override
   protected void onHandleIntent(Intent intent) {
     Log.i("StationsInfoService", "Entering onHandleIntent()");
+
+    if (_mRequesters.size() == 0) return;
+
     String sUrlFull = intent.getStringExtra("url_full");
     String sUrlDynamic = intent.getStringExtra("url_dynamic");
     String sStationsFile = intent.getStringExtra("stations_file");
