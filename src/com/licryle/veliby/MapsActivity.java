@@ -5,7 +5,9 @@ import java.io.File;
 import android.app.AlertDialog;
 import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -27,31 +29,46 @@ import com.licryle.veliby.BikeMap.BikeMap;
 import com.licryle.veliby.BikeMap.BikeMapListener;
 import com.licryle.veliby.BikeMap.Station;
 import com.licryle.veliby.BikeMap.Stations;
+import com.licryle.veliby.UI.OnSwipeListener;
+import com.licryle.veliby.UI.SwipeTouchDectector;
 
 public class MapsActivity extends ActionBarActivity implements BikeMapListener,
-    android.view.View.OnClickListener {
+    android.view.View.OnClickListener, OnSwipeListener {
   protected static final String FAVSTATION_WIDGET_UPDATE =
       "com.licryle.veliby.favstationwidget.WIDGET_UPDATE";
   protected BikeMap _mBikeMap = null;
   protected View _mStationInfo = null;
   protected View _mInfoView = null;
+  protected View _mMenu = null;
   protected int _iStationShownId;
   
 
   protected String _sFileStations = null;
   protected File _mStationsDataFile;
   protected Settings _mSettings;
+  protected SwipeTouchDectector _mSwipeDetector;
 
+
+  //************************* Activity Overrides ***************************//
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_maps);
-    _mStationInfo = findViewById(R.id.map_infoview);
-    _mStationInfo.findViewById(R.id.infoview_favorite).setOnClickListener(this);
-    _mInfoView = getLayoutInflater().inflate(R.layout.map_infoview, null);
+
     _mSettings = Settings.getInstance(this);
+    _mSwipeDetector = new SwipeTouchDectector(getApplicationContext(), 100, 100);
+    _mSwipeDetector.addListener(this);
 
     firstStart();
+
+    // Start - Create Control Views
+    createMenu();
+    
+    _mStationInfo = findViewById(R.id.map_infoview);
+    _mStationInfo.findViewById(R.id.infoview_favorite).setOnClickListener(this);
+    _mStationInfo.setOnTouchListener(_mSwipeDetector);
+    _mInfoView = getLayoutInflater().inflate(R.layout.map_infoview, null);
+    // End - Create Control Views
 
     File mAppDir = _mSettings.getVelibyPath();
     mAppDir.mkdirs();
@@ -60,8 +77,7 @@ public class MapsActivity extends ActionBarActivity implements BikeMapListener,
     GoogleMap mMap = ((SupportMapFragment) this.getSupportFragmentManager().
         findFragmentById(R.id.map)).getMap();
  
-    _mBikeMap = new BikeMap(this, _mStationsDataFile, mMap,
-        _mSettings.getDynamicDeadLine());
+    _mBikeMap = new BikeMap(this, mMap, _mSettings);
     _mBikeMap.registerBikeMapListener(this);
     
     if (! Util.hasPlayServices(this)) {
@@ -70,6 +86,14 @@ public class MapsActivity extends ActionBarActivity implements BikeMapListener,
     }
   }
 
+  @Override
+  public void onResume() {
+    super.onResume();
+    downloadMarkers(false);
+  }
+
+
+  //************************ ActionBar Overrides ***************************//
 	@Override
   public boolean onCreateOptionsMenu(Menu menu) {
     // Inflate the menu items for use in the action bar
@@ -78,34 +102,12 @@ public class MapsActivity extends ActionBarActivity implements BikeMapListener,
     return super.onCreateOptionsMenu(menu);
   }
 
-	protected void downloadMarkers(boolean bManual) {
-	  Log.i("MapsActivity", "Entered downloadMarkers()");
-	  if (_mBikeMap.isDownloading()) { return; }
- 
-    Stations mStations = _mBikeMap.stations();
-    if (mStations == null ||
-        mStations.isStaticExpired(_mSettings.getStaticDeadLine())) {
-      lightMessage(R.string.action_reload_start, true);
-      _mBikeMap.downloadMarkers();
-    } else {
-      if (bManual ||
-          mStations.isDynamicExpired(_mSettings.getDynamicDeadLine())) {
-        lightMessage(R.string.action_reload_start, true);
-        _mBikeMap.downloadMarkers();
-      }
-    }
-	}
-
   @Override
   public boolean onOptionsItemSelected(MenuItem item) {
     // Handle presses on the action bar items
     switch (item.getItemId()) {
     case R.id.action_reload:
       downloadMarkers(true);
-    return true;
-
-    case R.id.action_help:
-      showHelpDialog();
     return true;
 
       case R.id.action_mode:
@@ -133,19 +135,141 @@ public class MapsActivity extends ActionBarActivity implements BikeMapListener,
 	  }
   }
 
-  @Override
-  public void onResume() {
-  	super.onResume();
-  	downloadMarkers(false);
+  //************************** LeftMenu Controls ***************************//
+  public void createMenu() {
+    ActionBar actionBar = getSupportActionBar();
+    actionBar.setDisplayHomeAsUpEnabled(true);
+
+    _mMenu = findViewById(R.id.map_menu);
+    _mMenu.findViewById(R.id.mapsactivity_menu_rightpane).
+        setOnClickListener(this);
+
+    _mMenu.findViewById(R.id.mapsactivity_menu_favstations).
+        setOnClickListener(this);
+
+    _mMenu.findViewById(R.id.mapsactivity_menu_allstations).
+        setOnClickListener(this);
+
+    _mMenu.findViewById(R.id.mapsactivity_menu_help).
+        setOnClickListener(this);
+
+    toggleLeftMenuFavorite(_mSettings.isFavStationsOnly());
+
+    findViewById(R.id.mapsactivity_menu_leftpane).setOnTouchListener(_mSwipeDetector); 
   }
 
+  @Override
+  public Intent getSupportParentActivityIntent() {
+    if (_mMenu.getVisibility() == View.GONE) {
+      showMenu();
+    } else {
+      hideMenu();
+    }
+
+    return null;
+  }
+
+  public void toggleLeftMenuButton(TextView mText, boolean bPressed) {
+    if (bPressed) {
+      mText.setBackgroundColor(
+          getResources().getColor(R.color.menu_button_pressed));
+      mText.setTextColor(
+          getResources().getColor(R.color.menu_button_pressed_text));
+    } else {
+      mText.setBackgroundColor(Color.TRANSPARENT);
+      mText.setTextColor(getResources().getColor(R.color.menu_button_pressed));
+    }
+  }
+
+  public void toggleLeftMenuFavorite(boolean bFavMode) {
+    TextView mFavStations = (TextView) _mMenu.
+        findViewById(R.id.mapsactivity_menu_favstations);
+    TextView mAllStations = (TextView) _mMenu.
+        findViewById(R.id.mapsactivity_menu_allstations);
+
+    if (bFavMode) {
+      toggleLeftMenuButton(mAllStations, false);
+      toggleLeftMenuButton(mFavStations, true);
+    } else {
+      toggleLeftMenuButton(mAllStations, true);
+      toggleLeftMenuButton(mFavStations, false);
+    }
+  }
+  //********************** OnClickListener Interface ***********************//
+  @Override
+  public void onClick(View mView) {
+    switch (mView.getId()) {
+      case R.id.infoview_favorite:
+        boolean bNowFav = ! _mSettings.isStationFavorite(_iStationShownId);
+        _mSettings.setStationFavorite(_iStationShownId, bNowFav);
+        updateFavoriteView();
+
+        if (bNowFav) {
+          lightMessage(R.string.action_faved, true);
+        } else {
+          lightMessage(R.string.action_unfaved, true);
+
+          if (_mSettings.isFavStationsOnly() &&
+              _mSettings.getFavStations().size() == 0) {
+            hideStationInfo();
+            _mBikeMap.ShowAllStations();
+            lightMessage(R.string.map_nofav, true);
+          }
+        }
+
+        updateFavStationWidget();
+      break;
+ 
+      case R.id.mapsactivity_menu_allstations:
+        if (_mSettings.isFavStationsOnly()) {
+          toggleLeftMenuFavorite(false);
+          hideStationInfo();
+          _mBikeMap.ShowAllStations();
+        }
+        hideMenu();
+      break;
+ 
+      case R.id.mapsactivity_menu_favstations:
+        if (! _mSettings.isFavStationsOnly()) {
+          if (_mSettings.getFavStations().size() == 0) {
+            lightMessage(R.string.map_nofav, true);
+          } else {
+            toggleLeftMenuFavorite(true);
+            hideStationInfo();
+            _mBikeMap.ShowFavStations();
+          }
+        }
+        hideMenu();
+      break;
+ 
+      case R.id.mapsactivity_menu_help:
+        showHelpDialog();
+        hideMenu();
+      break;
+ 
+      case R.id.mapsactivity_menu_rightpane:
+        hideMenu();
+      break;
+    }
+  }
+
+  //*************************** Misc. Controls *** *************************//
   public void exitApp() {
     Intent intent = new Intent(Intent.ACTION_MAIN);
     intent.addCategory(Intent.CATEGORY_HOME);
     intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
     startActivity(intent);
   }
+ 
+  protected void firstStart() {
+    if (_mSettings.isFirstStart()) {
+      showHelpDialog();
 
+      _mSettings.firstStart();
+    }
+  }
+
+  //********************** Show / Hide control Views ***********************//
   public void showHelpDialog() {
     AlertDialog.Builder builder = new AlertDialog.Builder(this);
     LayoutInflater inflater = getLayoutInflater();
@@ -162,14 +286,6 @@ public class MapsActivity extends ActionBarActivity implements BikeMapListener,
   	String sText = getResources().getString(iTextResource);
   	int iLength = bLong ? Toast.LENGTH_LONG : Toast.LENGTH_SHORT;
   	Toast.makeText(getApplicationContext(), sText, iLength).show();
-  }
- 
-  protected void firstStart() {
-  	if (_mSettings.isFirstStart()) {
-  	  showHelpDialog();
-
-  		_mSettings.firstStart();
-  	}
   }
 
 	protected void alertBox(String title, String mymessage,
@@ -201,6 +317,45 @@ public class MapsActivity extends ActionBarActivity implements BikeMapListener,
     _mStationInfo.setVisibility(View.GONE);
   }
 
+  protected void showMenu() {
+    if (_mMenu.getVisibility() == View.VISIBLE) return;
+ 
+    Animation leftRight = AnimationUtils.loadAnimation(getApplicationContext(),
+        R.anim.left_right);
+
+    _mMenu.startAnimation(leftRight);
+    _mMenu.setVisibility(View.VISIBLE);
+  }
+
+  protected void hideMenu() {
+    if (_mMenu.getVisibility() == View.GONE) return;
+ 
+    Animation rightLeft = AnimationUtils.loadAnimation(getApplicationContext(),
+        R.anim.right_left);
+
+    _mMenu.startAnimation(rightLeft);
+    _mMenu.setVisibility(View.GONE);
+  }
+
+  protected void downloadMarkers(boolean bManual) {
+    Log.i("MapsActivity", "Entered downloadMarkers()");
+    if (_mBikeMap.isDownloading()) { return; }
+ 
+    Stations mStations = _mBikeMap.stations();
+    if (mStations == null ||
+        mStations.isStaticExpired(_mSettings.getStaticDeadLine())) {
+      lightMessage(R.string.action_reload_start, true);
+      _mBikeMap.downloadMarkers();
+    } else {
+      if (bManual ||
+          mStations.isDynamicExpired(_mSettings.getDynamicDeadLine())) {
+        lightMessage(R.string.action_reload_start, true);
+        _mBikeMap.downloadMarkers();
+      }
+    }
+  }
+
+  //********************** BikeMapListener Interface ***********************//
   @Override
   public void onDownloadFailure(BikeMap mBikeMap) {
     lightMessage(R.string.action_reload_failure, true);    
@@ -277,42 +432,7 @@ public class MapsActivity extends ActionBarActivity implements BikeMapListener,
     showStationInfo();
   }
 
-  protected void updateFavoriteView() {
-    ImageView mFavImg = (ImageView) _mStationInfo.findViewById(
-        R.id.infoview_favorite);
-    int iIcon = R.drawable.rate_star_big_off_holo_dark;
-
-    if (_mSettings.isStationFavorite(_iStationShownId)) {
-      iIcon = R.drawable.rate_star_big_on_holo_dark;
-    }
-    mFavImg.setImageResource(iIcon);
-  }
-
-  protected void updateFavStationWidget() {
-    Intent intent = new Intent(FAVSTATION_WIDGET_UPDATE);
-    getApplicationContext().sendBroadcast(intent);
-  }
-
-
-  @Override
-  public void onClick(View mView) {
-    switch (mView.getId()) {
-      case R.id.infoview_favorite:
-        boolean bNowFav = ! _mSettings.isStationFavorite(_iStationShownId);
-        _mSettings.setStationFavorite(_iStationShownId, bNowFav);
-        updateFavoriteView();
-
-        if (bNowFav) {
-          lightMessage(R.string.action_faved, true);
-        } else {
-          lightMessage(R.string.action_unfaved, true);
-        }
-
-        updateFavStationWidget();
-      break;
-    }
-  }
-
+  //*************************** InfoView Controls **************************//
   @Override
   public View onGetInfoContents(Marker mMarker, Station mStation) {
     // Take
@@ -330,5 +450,41 @@ public class MapsActivity extends ActionBarActivity implements BikeMapListener,
         setVisibility(iVisibility);
 
     return _mInfoView;
+  }
+
+  protected void updateFavoriteView() {
+    ImageView mFavImg = (ImageView) _mStationInfo.findViewById(
+        R.id.infoview_favorite);
+    int iIcon = R.drawable.rate_star_big_off_holo_dark;
+
+    if (_mSettings.isStationFavorite(_iStationShownId)) {
+      iIcon = R.drawable.rate_star_big_on_holo_dark;
+    }
+    mFavImg.setImageResource(iIcon);
+  }
+
+  protected void updateFavStationWidget() {
+    Intent intent = new Intent(FAVSTATION_WIDGET_UPDATE);
+    getApplicationContext().sendBroadcast(intent);
+  }
+
+  //************************* Swipe TOuch Interface ************************//
+  @Override
+  public void onSwipeRight(View mOrigin) {    
+  }
+
+  @Override
+  public void onSwipeLeft(View mOrigin) {
+    if (_mMenu.findViewById(mOrigin.getId()) != null) {
+      hideMenu();
+    }
+  }
+
+  @Override
+  public void onSwipeUp(View mOrigin) {    
+  }
+
+  @Override
+  public void onSwipeDown(View mOrigin) {
   }
 }

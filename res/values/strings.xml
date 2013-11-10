@@ -28,7 +28,6 @@ Enfin, 2 boutons vous permettent de contrôler l\'app:</string>
     <string name="action_mode">Mode d\'affichage</string>
     <string name="action_mode_find">Vélos disponibles</string>
     <string name="action_mode_return">Points d\'attaches disponibles</string>
-    <string name="action_help">Aide</string>
 
     <string name="action_reload">Mettre à jour</string>
     <string name="action_reload_start">Mise à jour en cours</string>
@@ -59,4 +58,9 @@ Enfin, 2 boutons vous permettent de contrôler l\'app:</string>
         <item>Trouver un vélo</item>
         <item>Rendre un vélo</item>
     </string-array>
+
+    <string name="map_nofav">Aucune station favorite, ajoutez en une pour activer cette vue. Pour cela, choisissez une station et cliquez sur l\'étoile.</string>
+    <string name="menu_favstations">Stations Favorites</string>
+    <string name="menu_allstations">Toutes les Stations</string>
+    <string name="menu_help">Aide</string>
 </resources>

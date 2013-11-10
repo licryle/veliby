@@ -1,6 +1,5 @@
 package com.licryle.veliby.BikeMap;
 
-import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Hashtable;
@@ -40,14 +39,13 @@ public class BikeMap implements OnMarkerClickListener, OnMapClickListener,
 	private GoogleMap _mMap;
 
 	protected Activity _mContext = null;
-	protected File _mStationsDataFile = null;
 
   protected boolean	_bModeFindBike = true;
   protected boolean	_bDownloading = false;
 
-  protected ArrayList<BikeMapListener> _mListeners;
+  protected ArrayList<BikeMapListener> _aListeners;
   protected Stations _mStations = null;
-
+  protected Settings _mSettings = null;
 
 	protected static Hashtable<Integer, Integer> _mBikeResources = 
 			new Hashtable<Integer, Integer>() {
@@ -61,14 +59,13 @@ public class BikeMap implements OnMarkerClickListener, OnMapClickListener,
 			};
 
 
-	public BikeMap(Activity mContext, File mStationsDataFile, GoogleMap mMap,
-	    int iDeadLine) {
-    _mListeners = new ArrayList<BikeMapListener>();
+	public BikeMap(Activity mContext, GoogleMap mMap, Settings mSettings) {
+    _aListeners = new ArrayList<BikeMapListener>();
+    _mSettings = mSettings;
 
     _mMap = mMap;
     _mMap.setInfoWindowAdapter(this);
     _mContext = mContext;
-    _mStationsDataFile = mStationsDataFile;
 
     setupMap();
 	}
@@ -116,30 +113,35 @@ public class BikeMap implements OnMarkerClickListener, OnMapClickListener,
     Iterator<Map.Entry<Integer, Station>> it = _mStations.entrySet().
         iterator();
 
+    boolean bShowfavOnly = _mSettings.isFavStationsOnly();
+    ArrayList<Integer> aFavStations = _mSettings.getFavStations();
     while (it.hasNext()) {
       Map.Entry<Integer, Station> entry = it.next();
       Station mStation = entry.getValue();
 
-      MarkerOptions mOpts = new MarkerOptions();
-      mOpts.position(mStation.getPosition());
-      mOpts.title(mStation.getName());
-      
-      int id = mStation.getId();
-      mOpts.title(String.valueOf(id));
-
-      int iIcon;
-      if (! mStation.isOpened()) {
-        iIcon = R.drawable.presence_offline;
-      } else {
-        int iBikes = (_bModeFindBike) ?
-             mStation.getAvailableBikes() :
-             mStation.getAvailableBikeStands();
-
-        iIcon = Util.resolveResourceFromNumber(_mBikeResources, iBikes);
+      if (! bShowfavOnly ||
+          (bShowfavOnly && aFavStations.contains(mStation.getId()))) {
+        MarkerOptions mOpts = new MarkerOptions();
+        mOpts.position(mStation.getPosition());
+        mOpts.title(mStation.getName());
+        
+        int id = mStation.getId();
+        mOpts.title(String.valueOf(id));
+  
+        int iIcon;
+        if (! mStation.isOpened()) {
+          iIcon = R.drawable.presence_offline;
+        } else {
+          int iBikes = (_bModeFindBike) ?
+               mStation.getAvailableBikes() :
+               mStation.getAvailableBikeStands();
+  
+          iIcon = Util.resolveResourceFromNumber(_mBikeResources, iBikes);
+        }
+  
+        mOpts.icon(BitmapDescriptorFactory.fromResource(iIcon));
+        _mMap.addMarker(mOpts);
       }
-
-      mOpts.icon(BitmapDescriptorFactory.fromResource(iIcon));
-      _mMap.addMarker(mOpts);
     }
   }
 
@@ -186,36 +188,36 @@ public class BikeMap implements OnMarkerClickListener, OnMapClickListener,
   }
 
   public void registerBikeMapListener(BikeMapListener mListener) {
-    _mListeners.add(mListener);
+    _aListeners.add(mListener);
   }
 
   protected void dispatchOnStationClick(Station mStation) {
-    for (BikeMapListener mListener: _mListeners) {
+    for (BikeMapListener mListener: _aListeners) {
       mListener.onStationClick(this, mStation);
     }
   }
 
   protected void dispatchOnMapClick(LatLng mLatLng) {
-    for (BikeMapListener mListener: _mListeners) {
+    for (BikeMapListener mListener: _aListeners) {
       mListener.onMapClick(this, mLatLng);
     }
   }
 
   protected void dispatchOnDownloadFailure() {
-    for (BikeMapListener mListener: _mListeners) {
+    for (BikeMapListener mListener: _aListeners) {
       mListener.onDownloadFailure(this);
     }
   }
 
   protected void dispatchOnDownloadSuccess() {
-    for (BikeMapListener mListener: _mListeners) {
+    for (BikeMapListener mListener: _aListeners) {
       mListener.onDownloadSuccess(this);
     }
   }
 
   protected View dispatchOnGetInfoContents(Marker mMarker, Station mStation) {
     View mResult = null;
-    for (BikeMapListener mListener: _mListeners) {
+    for (BikeMapListener mListener: _aListeners) {
       mResult = mListener.onGetInfoContents(mMarker, mStation);
     }
 
@@ -287,5 +289,15 @@ public class BikeMap implements OnMarkerClickListener, OnMapClickListener,
   @Override
   public View getInfoWindow(Marker mMarker) {
     return null;
+  }
+
+  public void ShowAllStations() {
+    _mSettings.setFavStationsOnly(false);
+    updateMarkers();
+  }
+
+  public void ShowFavStations() {
+    _mSettings.setFavStationsOnly(true);
+    updateMarkers();
   }
 }

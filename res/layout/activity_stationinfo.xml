@@ -4,7 +4,8 @@
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:background="#DDFFFFFF" >
+    android:background="#DDFFFFFF"
+    android:clickable="true" >
 
     <TextView
         android:id="@+id/infoview_stationclosed"
@@ -41,8 +42,7 @@
         android:orientation="horizontal"
         android:weightSum="2"
         android:layout_marginLeft="15dp"
-        android:layout_marginRight="15dp"
-        android:clickable="true" >
+        android:layout_marginRight="15dp" >
         
 
       <ImageView

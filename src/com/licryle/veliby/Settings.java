@@ -61,6 +61,7 @@ catch (NameNotFoundException e) {}*/
   public Hashtable<Integer, Integer> getBikeColors() {
     return _mBikeResources;
   }
+
   public boolean isFirstStart() {
     return ! _mPrefs.getBoolean("previously_started", false);
   }
@@ -126,5 +127,14 @@ catch (NameNotFoundException e) {}*/
 
   public File getStationsFile() {
     return new File(getVelibyPath().getAbsolutePath() + "/stations.comlete");
+  }
+
+  public boolean isFavStationsOnly() {
+    return _mPrefs.getBoolean("favorite_only", false);
+  }
+
+
+  public void setFavStationsOnly(boolean bFavOnly) {
+    _mPrefs.edit().putBoolean("favorite_only", bFavOnly).commit();
   }
 }

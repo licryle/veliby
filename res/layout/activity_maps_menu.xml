@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="horizontal"
+    android:id="@+id/mapsactivity_menu"
+    android:baselineAligned="false"
+    android:clickable="true" >
+
+    <ScrollView
+        android:id="@+id/mapsactivity_menu_leftpane"
+        android:layout_height="match_parent"
+        android:layout_width="230dp"
+        android:background="#DDFFFFFF" >
+        
+		    <LinearLayout
+		        android:layout_height="wrap_content"
+		        android:layout_width="match_parent"
+		        android:orientation="vertical"
+		        android:padding="10sp" >
+		
+		        <TextView
+		            android:id="@+id/mapsactivity_menu_allstations"
+		            style="@style/MapsActivity_Menu_Button.Pressed"
+		            android:text="@string/menu_allstations" />
+		
+		        <TextView
+		            android:id="@+id/mapsactivity_menu_favstations"
+		            style="@style/MapsActivity_Menu_Button"
+		            android:text="@string/menu_favstations" />
+		
+		        <View style="@style/MapsActivity_Menu_Divider" />
+		
+		        <TextView
+		            android:id="@+id/mapsactivity_menu_help"
+		            style="@style/MapsActivity_Menu_Button"
+		            android:text="@string/menu_help" />
+		    </LinearLayout>
+    </ScrollView>
+
+    <LinearLayout
+        android:id="@+id/mapsactivity_menu_rightpane"
+        android:layout_height="match_parent"
+        android:layout_width="0px"
+        android:layout_weight="1"
+        android:orientation="vertical">
+    </LinearLayout>
+</LinearLayout>

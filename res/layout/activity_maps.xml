@@ -36,4 +36,12 @@
          android:layout_height="wrap_content"
          android:layout_alignParentBottom="true"
          layout="@layout/activity_stationinfo"/>
+
+    <include
+         android:id="@+id/map_menu"
+         android:visibility="gone"
+         android:layout_width="match_parent"
+         android:layout_height="match_parent"
+         android:layout_alignParentLeft="true"
+         layout="@layout/activity_maps_menu"/>
 </RelativeLayout>
