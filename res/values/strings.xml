@@ -60,10 +60,11 @@ Enfin, 2 boutons vous permettent de contrôler l\'app:</string>
     </string-array>
 
     <string name="map_nofav">Aucune station favorite, ajoutez en une pour activer cette vue. Pour cela, choisissez une station et cliquez sur l\'étoile.</string>
-    <string name="map_directionsfailed">Impossible d\obtenir les directions.</string>
+    <string name="map_directionsfailed">Impossible d\'obtenir les directions.</string>
     <string name="map_nodistance">Distance indisponible</string>
 
     <string name="map_stationinfo_getdirections">Obtenir directions</string>
+    <string name="map_stationinfo_toggle">Afficher/masquer infos complémentaires</string>
     <string name="menu_favstations">Stations Favorites</string>
     <string name="menu_allstations">Toutes les Stations</string>
     <string name="menu_help">Aide</string>

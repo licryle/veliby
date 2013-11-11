@@ -68,6 +68,8 @@ public class MapsActivity extends ActionBarActivity implements BikeMapListener,
     
     _mStationInfo = findViewById(R.id.map_stationinfo);
     _mStationInfo.findViewById(R.id.infoview_favorite).setOnClickListener(this);
+    _mStationInfo.findViewById(R.id.map_stationinfo_toggle).
+        setOnClickListener(this);
     findViewById(R.id.map_stationinfo_main).setOnTouchListener(_mSwipeDetector);
 
     _mStationInfoExt = findViewById(R.id.map_stationinfo_extended);
@@ -209,6 +211,14 @@ public class MapsActivity extends ActionBarActivity implements BikeMapListener,
       case R.id.map_stationinfo_direction:
         _mBikeMap.displayDirections(_mSelectedStation.getPosition());
       break;
+      
+      case R.id.map_stationinfo_toggle:
+        if (isExtendedStationInfoShown()) {
+          hideExtendedStationInfo();
+        } else {
+          showExtendedStationInfo();
+        }
+      break;
 
       case R.id.infoview_favorite:
         boolean bNowFav = ! _mSettings.isStationFavorite(_iStationShownId);
@@ -337,7 +347,18 @@ public class MapsActivity extends ActionBarActivity implements BikeMapListener,
         R.anim.bottom_up);
 
     _mStationInfoExt.startAnimation(bottomUp);*/
-    _mStationInfoExt.setVisibility(View.VISIBLE);    
+
+    ImageView mToggle = (ImageView) _mStationInfo.
+        findViewById(R.id.map_stationinfo_toggle);
+
+    mToggle.setImageDrawable(getResources().
+        getDrawable(R.drawable.arrow_down_float));
+
+    _mStationInfoExt.setVisibility(View.VISIBLE);
+  }
+
+  protected boolean isExtendedStationInfoShown() {
+    return _mStationInfoExt.getVisibility() == View.VISIBLE;
   }
 
   protected void hideExtendedStationInfo() {
@@ -347,6 +368,13 @@ public class MapsActivity extends ActionBarActivity implements BikeMapListener,
         R.anim.bottom_down);
 
     _mStationInfoExt.startAnimation(bottomDown);*/
+
+    ImageView mToggle = (ImageView) _mStationInfo.
+        findViewById(R.id.map_stationinfo_toggle);
+
+    mToggle.setImageDrawable(getResources().
+        getDrawable(R.drawable.arrow_up_float));
+
     _mStationInfoExt.setVisibility(View.GONE);
   }
 
@@ -414,6 +442,29 @@ public class MapsActivity extends ActionBarActivity implements BikeMapListener,
   public void onStationClick(BikeMap mBikeMap, Station mStation) {
     _mSelectedStation = mStation;
 
+    // Distance
+    LatLng mLastKnownPos = Util.getLastPosition(getApplicationContext());
+    TextView mDistance = (TextView) _mStationInfo.findViewById(
+        R.id.map_stationinfo_distance);
+    if (mLastKnownPos == null) {
+      mDistance.setText(getResources().getText(R.string.map_nodistance));
+    } else {
+      float[] aDistance = new float[3];
+      Location.distanceBetween(mLastKnownPos.latitude,
+                               mLastKnownPos.longitude,
+                               mStation.getPosition().latitude,
+                               mStation.getPosition().longitude,
+                               aDistance);
+      mDistance.setText((int)(aDistance[0]) + " mètres");
+    }
+
+    // Adress
+    TextView mAddress = (TextView) _mStationInfo.
+        findViewById(R.id.map_stationinfo_address);
+    mAddress.setText(mStation.getAddress().toLowerCase());    
+    
+    showStationInfo();
+
     if (mStation.isStaticOnly()) {
       _mStationInfo.findViewById(R.id.infoview_noinfo).
           setVisibility(View.VISIBLE);
@@ -469,29 +520,6 @@ public class MapsActivity extends ActionBarActivity implements BikeMapListener,
     color = Util.resolveResourceFromNumber(_mSettings.getBikeColors(),
         iNbBikes);
     mBikes.setTextColor(getResources().getColor(color));
-
-    // Distance
-    LatLng mLastKnownPos = Util.getLastPosition(getApplicationContext());
-    TextView mDistance = (TextView) _mStationInfo.findViewById(
-        R.id.map_stationinfo_distance);
-    if (mLastKnownPos == null) {
-      mDistance.setText(getResources().getText(R.string.map_nodistance));
-    } else {
-      float[] aDistance = new float[3];
-      Location.distanceBetween(mLastKnownPos.latitude,
-                               mLastKnownPos.longitude,
-                               mStation.getPosition().latitude,
-                               mStation.getPosition().longitude,
-                               aDistance);
-      mDistance.setText((int)(aDistance[0]) + " mètres");
-    }
-
-    // Adresse
-    TextView mAddress = (TextView) _mStationInfo.
-        findViewById(R.id.map_stationinfo_address);
-    mAddress.setText(mStation.getAddress().toLowerCase());    
-    
-    showStationInfo();
   }
 
   //*************************** InfoView Controls **************************//

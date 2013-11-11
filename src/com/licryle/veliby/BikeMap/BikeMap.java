@@ -275,8 +275,6 @@ public class BikeMap implements OnMarkerClickListener, OnMapClickListener,
     }
   }
 
-
-
   @Override
   public View getInfoContents(Marker mMarker) {
     if (_mStations == null) return null;
@@ -303,7 +301,7 @@ public class BikeMap implements OnMarkerClickListener, OnMapClickListener,
   }
 
   public void displayDirections(LatLng _mPos) {
-    Routing mRouting = new Routing(_mContext);
+    Routing mRouting = new Routing(_mContext, Routing.TravelMode.WALKING);
     mRouting.registerListener(this);
     mRouting.execute(Util.getLastPosition(_mContext), _mPos);
   }
@@ -315,6 +313,7 @@ public class BikeMap implements OnMarkerClickListener, OnMapClickListener,
   @Override
   public void onFailure() {
     clearDirections();
+    dispatchOnDirectionsFailed();
   }
 
   @Override

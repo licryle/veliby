@@ -105,7 +105,7 @@
 		            android:layout_width="wrap_content" />
 		      </LinearLayout>
 		    </LinearLayout>
-		
+
 		    <include
 		         android:id="@+id/map_stationinfo_extended"
 		         android:visibility="gone"
@@ -114,4 +114,14 @@
 		         android:background="#FFFF0000"
 		         layout="@layout/activity_stationinfo_extended"/>
 		</LinearLayout>
+
+    <ImageView 
+        android:id="@+id/map_stationinfo_toggle"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentRight="true"
+        android:layout_width="25dp"
+        android:layout_height="15dp"
+        android:layout_margin="2dp"
+        android:contentDescription="@string/map_stationinfo_toggle"
+        android:src="@drawable/arrow_up_float" />
 </RelativeLayout>
