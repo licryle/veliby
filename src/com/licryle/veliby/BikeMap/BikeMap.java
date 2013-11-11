@@ -7,11 +7,7 @@ import java.util.Iterator;
 import java.util.Map;
 
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
-import android.location.Criteria;
-import android.location.Location;
-import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Parcelable;
@@ -19,6 +15,8 @@ import android.os.ResultReceiver;
 import android.util.Log;
 import android.view.View;
 
+import com.directions.route.Routing;
+import com.directions.route.RoutingListener;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -30,12 +28,15 @@ import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polyline;
+import com.google.android.gms.maps.model.PolylineOptions;
 import com.licryle.veliby.R;
 import com.licryle.veliby.Settings;
 import com.licryle.veliby.Util;
 
+
 public class BikeMap implements OnMarkerClickListener, OnMapClickListener,
-    InfoWindowAdapter {
+    InfoWindowAdapter, RoutingListener {
 	private GoogleMap _mMap;
 
 	protected Activity _mContext = null;
@@ -46,6 +47,8 @@ public class BikeMap implements OnMarkerClickListener, OnMapClickListener,
   protected ArrayList<BikeMapListener> _aListeners;
   protected Stations _mStations = null;
   protected Settings _mSettings = null;
+
+  protected Polyline _mCurrentDirections = null;
 
 	protected static Hashtable<Integer, Integer> _mBikeResources = 
 			new Hashtable<Integer, Integer>() {
@@ -153,18 +156,10 @@ public class BikeMap implements OnMarkerClickListener, OnMapClickListener,
     _mMap.setOnMarkerClickListener(this);
     _mMap.setOnMapClickListener(this);
 
-    LocationManager lm = (LocationManager) _mContext.getSystemService(
-        Context.LOCATION_SERVICE);
-    Criteria crit = new Criteria();
-    crit.setAccuracy(Criteria.ACCURACY_FINE);
-    String provider = lm.getBestProvider(crit, true);
-    Location lastKnownLocation = lm.getLastKnownLocation(provider);
-    if (lastKnownLocation != null) {
-      LatLng ll = new LatLng(lastKnownLocation.getLatitude(),
-          lastKnownLocation.getLongitude());
-
+    LatLng mlastKnownPos = Util.getLastPosition(_mContext);
+    if (mlastKnownPos != null) {
       CameraUpdate cu = CameraUpdateFactory.newCameraPosition(
-          new CameraPosition(ll, 16, 0, 0));
+          new CameraPosition(mlastKnownPos, 16, 0, 0));
       updateCamera(cu);
     }
 
@@ -212,6 +207,12 @@ public class BikeMap implements OnMarkerClickListener, OnMapClickListener,
   protected void dispatchOnDownloadSuccess() {
     for (BikeMapListener mListener: _aListeners) {
       mListener.onDownloadSuccess(this);
+    }
+  }
+
+  protected void dispatchOnDirectionsFailed() {
+    for (BikeMapListener mListener: _aListeners) {
+      mListener.onDirectionsFailed(this);
     }
   }
 
@@ -299,5 +300,33 @@ public class BikeMap implements OnMarkerClickListener, OnMapClickListener,
   public void ShowFavStations() {
     _mSettings.setFavStationsOnly(true);
     updateMarkers();
+  }
+
+  public void displayDirections(LatLng _mPos) {
+    Routing mRouting = new Routing(_mContext);
+    mRouting.registerListener(this);
+    mRouting.execute(Util.getLastPosition(_mContext), _mPos);
+  }
+
+  public void clearDirections() {
+    if (_mCurrentDirections != null) _mCurrentDirections.remove();
+  }
+
+  @Override
+  public void onFailure() {
+    clearDirections();
+  }
+
+  @Override
+  public void onStart() {
+  }
+
+  @Override
+  public void onSuccess(PolylineOptions mPolyOptions) {
+    PolylineOptions mOptions = _mSettings.getDirectionsStyle();
+    mOptions.addAll(mPolyOptions.getPoints());
+
+    clearDirections();
+    _mCurrentDirections = _mMap.addPolyline(mOptions);
   }
 }

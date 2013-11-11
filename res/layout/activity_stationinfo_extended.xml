@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:clickable="true" >
+
+    <LinearLayout
+        android:id="@+id/map_stationinfo_navig_row"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:weightSum="2"
+        android:layout_marginLeft="15dp"
+        android:layout_marginRight="15dp" >
+
+        <LinearLayout 
+            android:orientation="vertical"
+            android:layout_height="wrap_content"
+            android:layout_width="0px"
+            android:layout_weight="2">
+		        <TextView
+		            android:id="@+id/map_stationinfo_distance"
+		            android:layout_width="wrap_content"
+		            android:layout_height="wrap_content"
+		            android:layout_gravity="center_horizontal"
+		            android:textSize="@dimen/infoview_title"
+                android:textStyle="bold"
+		            android:text="3xx mètres"/>
+		
+				    <TextView
+				        android:id="@+id/map_stationinfo_address"
+				        android:layout_height="wrap_content"
+				        android:layout_width="match_parent"
+				        android:layout_gravity="center_horizontal"
+				        android:textStyle="italic"
+				        android:textSize="@dimen/infoview_title"
+				        android:text="Adresse"/>
+				</LinearLayout>
+
+        <View style="@style/MapsActivity_Info_Divider" />
+	
+	      <ImageView
+	          android:id="@+id/map_stationinfo_direction"
+	          android:layout_width="50sp"
+	          android:layout_height="50sp"
+	          android:layout_gravity="center_vertical"
+	          android:adjustViewBounds="true"
+	          android:contentDescription="@string/map_stationinfo_getdirections"
+	          android:src="@drawable/ic_menu_directions" />
+    </LinearLayout>
+</LinearLayout>

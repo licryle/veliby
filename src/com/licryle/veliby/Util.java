@@ -9,9 +9,13 @@ import java.util.Hashtable;
 import java.util.List;
 
 import android.content.Context;
+import android.location.Criteria;
+import android.location.Location;
+import android.location.LocationManager;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.android.gms.maps.model.LatLng;
 
 public abstract class Util {
 	public static String readFile( String file ) throws IOException {
@@ -65,5 +69,21 @@ public abstract class Util {
     }
 
     return true;
+  }
+
+  public static LatLng getLastPosition(Context mContext) {
+    LocationManager mLocMgr = (LocationManager) mContext.getSystemService(
+        Context.LOCATION_SERVICE);
+
+    Criteria mCriteria = new Criteria();
+    mCriteria.setAccuracy(Criteria.ACCURACY_FINE);
+ 
+    String sProvider = mLocMgr.getBestProvider(mCriteria, true);
+    Location mLastLocation = mLocMgr.getLastKnownLocation(sProvider);
+
+    if (mLastLocation == null) return null;
+    
+    return new LatLng(mLastLocation.getLatitude(),
+        mLastLocation.getLongitude());
   }
 }

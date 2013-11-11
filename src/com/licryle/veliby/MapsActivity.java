@@ -6,6 +6,7 @@ import android.app.AlertDialog;
 import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
 import android.graphics.Color;
+import android.location.Location;
 import android.os.Bundle;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
@@ -38,13 +39,14 @@ public class MapsActivity extends ActionBarActivity implements BikeMapListener,
       "com.licryle.veliby.favstationwidget.WIDGET_UPDATE";
   protected BikeMap _mBikeMap = null;
   protected View _mStationInfo = null;
+  protected View _mStationInfoExt = null;
   protected View _mInfoView = null;
   protected View _mMenu = null;
   protected int _iStationShownId;
-  
+
+  protected Station _mSelectedStation = null;
 
   protected String _sFileStations = null;
-  protected File _mStationsDataFile;
   protected Settings _mSettings;
   protected SwipeTouchDectector _mSwipeDetector;
 
@@ -64,15 +66,20 @@ public class MapsActivity extends ActionBarActivity implements BikeMapListener,
     // Start - Create Control Views
     createMenu();
     
-    _mStationInfo = findViewById(R.id.map_infoview);
+    _mStationInfo = findViewById(R.id.map_stationinfo);
     _mStationInfo.findViewById(R.id.infoview_favorite).setOnClickListener(this);
-    _mStationInfo.setOnTouchListener(_mSwipeDetector);
+    findViewById(R.id.map_stationinfo_main).setOnTouchListener(_mSwipeDetector);
+
+    _mStationInfoExt = findViewById(R.id.map_stationinfo_extended);
+    _mStationInfoExt.setOnTouchListener(_mSwipeDetector);
+    _mStationInfoExt.findViewById(R.id.map_stationinfo_direction).
+        setOnClickListener(this);
+
     _mInfoView = getLayoutInflater().inflate(R.layout.map_infoview, null);
     // End - Create Control Views
 
     File mAppDir = _mSettings.getVelibyPath();
     mAppDir.mkdirs();
-    _mStationsDataFile = _mSettings.getStationsFile();
 
     GoogleMap mMap = ((SupportMapFragment) this.getSupportFragmentManager().
         findFragmentById(R.id.map)).getMap();
@@ -199,6 +206,10 @@ public class MapsActivity extends ActionBarActivity implements BikeMapListener,
   @Override
   public void onClick(View mView) {
     switch (mView.getId()) {
+      case R.id.map_stationinfo_direction:
+        _mBikeMap.displayDirections(_mSelectedStation.getPosition());
+      break;
+
       case R.id.infoview_favorite:
         boolean bNowFav = ! _mSettings.isStationFavorite(_iStationShownId);
         _mSettings.setStationFavorite(_iStationShownId, bNowFav);
@@ -212,6 +223,7 @@ public class MapsActivity extends ActionBarActivity implements BikeMapListener,
           if (_mSettings.isFavStationsOnly() &&
               _mSettings.getFavStations().size() == 0) {
             hideStationInfo();
+            toggleLeftMenuFavorite(false);
             _mBikeMap.ShowAllStations();
             lightMessage(R.string.map_nofav, true);
           }
@@ -315,6 +327,27 @@ public class MapsActivity extends ActionBarActivity implements BikeMapListener,
 
     _mStationInfo.startAnimation(bottomDown);
     _mStationInfo.setVisibility(View.GONE);
+    hideStationInfo();
+  }
+
+  protected void showExtendedStationInfo() {
+    /*if (_mStationInfoExt.getVisibility() == View.VISIBLE) return;
+ 
+    Animation bottomUp = AnimationUtils.loadAnimation(getApplicationContext(),
+        R.anim.bottom_up);
+
+    _mStationInfoExt.startAnimation(bottomUp);*/
+    _mStationInfoExt.setVisibility(View.VISIBLE);    
+  }
+
+  protected void hideExtendedStationInfo() {
+    /*if (_mStationInfoExt.getVisibility() == View.GONE) return;
+
+    Animation bottomDown = AnimationUtils.loadAnimation(getApplicationContext(),
+        R.anim.bottom_down);
+
+    _mStationInfoExt.startAnimation(bottomDown);*/
+    _mStationInfoExt.setVisibility(View.GONE);
   }
 
   protected void showMenu() {
@@ -368,12 +401,19 @@ public class MapsActivity extends ActionBarActivity implements BikeMapListener,
   }
 
   @Override
+  public void onDirectionsFailed(BikeMap mBikeMap) {
+    lightMessage(R.string.map_directionsfailed, false);
+  }
+
+  @Override
   public void onMapClick(BikeMap bikeMap, LatLng mLatLng) {
     hideStationInfo();
   }
 
   @Override
   public void onStationClick(BikeMap mBikeMap, Station mStation) {
+    _mSelectedStation = mStation;
+
     if (mStation.isStaticOnly()) {
       _mStationInfo.findViewById(R.id.infoview_noinfo).
           setVisibility(View.VISIBLE);
@@ -397,6 +437,7 @@ public class MapsActivity extends ActionBarActivity implements BikeMapListener,
           setVisibility(View.GONE);
 
       showStationInfo();
+      _mSelectedStation = null;
       return;
     }
 
@@ -429,6 +470,27 @@ public class MapsActivity extends ActionBarActivity implements BikeMapListener,
         iNbBikes);
     mBikes.setTextColor(getResources().getColor(color));
 
+    // Distance
+    LatLng mLastKnownPos = Util.getLastPosition(getApplicationContext());
+    TextView mDistance = (TextView) _mStationInfo.findViewById(
+        R.id.map_stationinfo_distance);
+    if (mLastKnownPos == null) {
+      mDistance.setText(getResources().getText(R.string.map_nodistance));
+    } else {
+      float[] aDistance = new float[3];
+      Location.distanceBetween(mLastKnownPos.latitude,
+                               mLastKnownPos.longitude,
+                               mStation.getPosition().latitude,
+                               mStation.getPosition().longitude,
+                               aDistance);
+      mDistance.setText((int)(aDistance[0]) + " mètres");
+    }
+
+    // Adresse
+    TextView mAddress = (TextView) _mStationInfo.
+        findViewById(R.id.map_stationinfo_address);
+    mAddress.setText(mStation.getAddress().toLowerCase());    
+    
     showStationInfo();
   }
 
@@ -481,10 +543,16 @@ public class MapsActivity extends ActionBarActivity implements BikeMapListener,
   }
 
   @Override
-  public void onSwipeUp(View mOrigin) {    
+  public void onSwipeUp(View mOrigin) {
+    if (_mStationInfo.findViewById(mOrigin.getId()) != null) {
+      showExtendedStationInfo();
+    }
   }
 
   @Override
   public void onSwipeDown(View mOrigin) {
+    if (_mStationInfo.findViewById(mOrigin.getId()) != null) {
+      hideExtendedStationInfo();
+    }
   }
 }

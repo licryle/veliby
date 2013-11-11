@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.Map;
 
+import com.google.android.gms.maps.model.PolylineOptions;
+
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Environment;
@@ -136,5 +138,15 @@ catch (NameNotFoundException e) {}*/
 
   public void setFavStationsOnly(boolean bFavOnly) {
     _mPrefs.edit().putBoolean("favorite_only", bFavOnly).commit();
+  }
+
+  public PolylineOptions getDirectionsStyle() {
+    PolylineOptions mOptions = new PolylineOptions();
+
+    mOptions.color(
+        _mContext.getResources().getColor(R.color.veliby_purple_light));
+    mOptions.width(10);
+
+    return mOptions;
   }
 }

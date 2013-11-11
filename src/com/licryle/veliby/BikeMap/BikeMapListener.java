@@ -11,4 +11,5 @@ public interface BikeMapListener {
   void onStationClick(BikeMap mBikeMap, Station mStation);
   void onMapClick(BikeMap bikeMap, LatLng mLatLng);
   View onGetInfoContents(Marker mMarker, Station mStation);
+  void onDirectionsFailed(BikeMap bikeMap);
 }

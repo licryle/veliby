@@ -30,7 +30,7 @@
           map:uiZoomGestures="true" />
 
     <include
-         android:id="@+id/map_infoview"
+         android:id="@+id/map_stationinfo"
          android:visibility="gone"
          android:layout_width="match_parent"
          android:layout_height="wrap_content"
