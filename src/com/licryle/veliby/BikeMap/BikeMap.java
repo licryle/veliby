@@ -311,17 +311,17 @@ public class BikeMap implements OnMarkerClickListener, OnMapClickListener,
   }
 
   @Override
-  public void onFailure() {
+  public void onRoutingFailure() {
     clearDirections();
     dispatchOnDirectionsFailed();
   }
 
   @Override
-  public void onStart() {
+  public void onRoutingStart() {
   }
 
   @Override
-  public void onSuccess(PolylineOptions mPolyOptions) {
+  public void onRoutingSuccess(PolylineOptions mPolyOptions) {
     PolylineOptions mOptions = _mSettings.getDirectionsStyle();
     mOptions.addAll(mPolyOptions.getPoints());
 

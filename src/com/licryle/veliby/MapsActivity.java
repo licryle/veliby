@@ -5,20 +5,29 @@ import java.io.File;
 import android.app.AlertDialog;
 import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.graphics.Color;
 import android.location.Location;
 import android.os.Bundle;
+import android.support.v4.app.ActionBarDrawerToggle;
+import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
+import android.widget.ArrayAdapter;
 import android.widget.ImageView;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -34,20 +43,23 @@ import com.licryle.veliby.UI.OnSwipeListener;
 import com.licryle.veliby.UI.SwipeTouchDectector;
 
 public class MapsActivity extends ActionBarActivity implements BikeMapListener,
-    android.view.View.OnClickListener, OnSwipeListener {
+    android.view.View.OnClickListener, OnSwipeListener, OnItemClickListener {
   protected static final String FAVSTATION_WIDGET_UPDATE =
       "com.licryle.veliby.favstationwidget.WIDGET_UPDATE";
   protected BikeMap _mBikeMap = null;
   protected View _mStationInfo = null;
   protected View _mStationInfoExt = null;
   protected View _mInfoView = null;
-  protected View _mMenu = null;
-  protected int _iStationShownId;
+
+  protected DrawerLayout _mMenu = null;
+  protected ListView _mMenuList = null;
+  protected ArrayAdapter<String> _mMenuAdapter = null;
+  protected ActionBarDrawerToggle _mMenuToggle = null;
 
   protected Station _mSelectedStation = null;
 
   protected String _sFileStations = null;
-  protected Settings _mSettings;
+  protected Settings _mSettings = null;
   protected SwipeTouchDectector _mSwipeDetector;
 
 
@@ -101,6 +113,19 @@ public class MapsActivity extends ActionBarActivity implements BikeMapListener,
     downloadMarkers(false);
   }
 
+  @Override
+  protected void onPostCreate(Bundle savedInstanceState) {
+    super.onPostCreate(savedInstanceState);
+    // Sync the toggle state after onRestoreInstanceState has occurred.
+    _mMenuToggle.syncState();
+  }
+
+  @Override
+  public void onConfigurationChanged(Configuration newConfig) {
+    super.onConfigurationChanged(newConfig);
+    _mMenuToggle.onConfigurationChanged(newConfig);
+  }
+
 
   //************************ ActionBar Overrides ***************************//
 	@Override
@@ -113,11 +138,17 @@ public class MapsActivity extends ActionBarActivity implements BikeMapListener,
 
   @Override
   public boolean onOptionsItemSelected(MenuItem item) {
+    // Pass the event to ActionBarDrawerToggle, if it returns
+    // true, then it has handled the app icon touch event
+    if (_mMenuToggle.onOptionsItemSelected(item)) {
+      return true;
+    }
+
     // Handle presses on the action bar items
     switch (item.getItemId()) {
-    case R.id.action_reload:
-      downloadMarkers(true);
-    return true;
+      case R.id.action_reload:
+        downloadMarkers(true);
+      return true;
 
       case R.id.action_mode:
       	boolean bModeFindBike = ! _mBikeMap.isFindBikeMode();
@@ -140,70 +171,97 @@ public class MapsActivity extends ActionBarActivity implements BikeMapListener,
       return true;
 
       default:
-      return super.onOptionsItemSelected(item);
+        return super.onOptionsItemSelected(item);
 	  }
   }
 
   //************************** LeftMenu Controls ***************************//
   public void createMenu() {
+    _mMenu = (DrawerLayout) findViewById(R.id.drawer_layout);
+    _mMenuList = (ListView) findViewById(R.id.mapsactivity_menu);
+
+    _mMenuToggle = new ActionBarDrawerToggle(
+        this, _mMenu, R.drawable.ic_drawer,
+        R.string.menu_open, R.string.menu_close);
+    // Set the drawer toggle as the DrawerListener
+    _mMenu.setDrawerListener(_mMenuToggle);
+
     ActionBar actionBar = getSupportActionBar();
     actionBar.setDisplayHomeAsUpEnabled(true);
+    actionBar.setHomeButtonEnabled(true);
+ 
+    String[] aItems = getResources().getStringArray(R.array.menu_left_items);
+    // Set the adapter for the list view
+    _mMenuAdapter = new ArrayAdapter<String> (this,
+        R.layout.activity_maps_menu_item, aItems) {
+      @Override
+      public View getView(int position, View convertView, ViewGroup parent) {    
+        TextView itemView = (TextView) super.getView(position, convertView,
+            parent);
 
-    _mMenu = findViewById(R.id.map_menu);
-    _mMenu.findViewById(R.id.mapsactivity_menu_rightpane).
-        setOnClickListener(this);
+        if (itemView.getText().equals("")) {
+          return getLayoutInflater().inflate(
+              R.layout.activity_maps_menu_divider, null);
+        }
 
-    _mMenu.findViewById(R.id.mapsactivity_menu_favstations).
-        setOnClickListener(this);
+        boolean bFavOnly = _mSettings.isFavStationsOnly();
+        if ( (position == 0 && ! bFavOnly) ||
+            (position == 1 && bFavOnly)) {
+          itemView.setBackgroundColor(
+              getResources().getColor(R.color.menu_button_pressed));
+          itemView.setTextColor(Color.WHITE);
+        } else {
+          itemView.setBackgroundColor(Color.TRANSPARENT);
+          itemView.setTextColor(
+              getResources().getColor(R.color.veliby_purple_light));          
+        }
+    
+        return itemView;
+      }
+    };
 
-    _mMenu.findViewById(R.id.mapsactivity_menu_allstations).
-        setOnClickListener(this);
-
-    _mMenu.findViewById(R.id.mapsactivity_menu_help).
-        setOnClickListener(this);
-
-    toggleLeftMenuFavorite(_mSettings.isFavStationsOnly());
-
-    findViewById(R.id.mapsactivity_menu_leftpane).setOnTouchListener(_mSwipeDetector); 
+    _mMenuList.setAdapter(_mMenuAdapter);
+    _mMenuList.setOnItemClickListener(this);
   }
 
+  //*********************** Menu Items Click Interface **********************//
   @Override
-  public Intent getSupportParentActivityIntent() {
-    if (_mMenu.getVisibility() == View.GONE) {
-      showMenu();
-    } else {
-      hideMenu();
-    }
+  public void onItemClick(AdapterView<?> parent, View view, int position,
+      long id) {
+    parent.requestFocusFromTouch();
 
-    return null;
+    switch (position) {
+      case 0:
+        if (_mSettings.isFavStationsOnly()) {
+          _mSettings.setFavStationsOnly(false);
+          hideStationInfo();
+          _mBikeMap.ShowAllStations();
+        }
+        hideMenu();
+        _mMenuAdapter.notifyDataSetChanged();
+      break;
+ 
+      case 1:
+        if (! _mSettings.isFavStationsOnly()) {
+          if (_mSettings.getFavStations().size() == 0) {
+            lightMessage(R.string.map_nofav, true);
+          } else {
+            _mSettings.setFavStationsOnly(true);
+            hideStationInfo();
+            _mBikeMap.ShowFavStations();
+          }
+        }
+        hideMenu();
+        _mMenuAdapter.notifyDataSetChanged();
+      break;
+ 
+      case 3:
+        showHelpDialog();
+        hideMenu();
+      break;
+    }
   }
 
-  public void toggleLeftMenuButton(TextView mText, boolean bPressed) {
-    if (bPressed) {
-      mText.setBackgroundColor(
-          getResources().getColor(R.color.menu_button_pressed));
-      mText.setTextColor(
-          getResources().getColor(R.color.menu_button_pressed_text));
-    } else {
-      mText.setBackgroundColor(Color.TRANSPARENT);
-      mText.setTextColor(getResources().getColor(R.color.menu_button_pressed));
-    }
-  }
-
-  public void toggleLeftMenuFavorite(boolean bFavMode) {
-    TextView mFavStations = (TextView) _mMenu.
-        findViewById(R.id.mapsactivity_menu_favstations);
-    TextView mAllStations = (TextView) _mMenu.
-        findViewById(R.id.mapsactivity_menu_allstations);
-
-    if (bFavMode) {
-      toggleLeftMenuButton(mAllStations, false);
-      toggleLeftMenuButton(mFavStations, true);
-    } else {
-      toggleLeftMenuButton(mAllStations, true);
-      toggleLeftMenuButton(mFavStations, false);
-    }
-  }
   //********************** OnClickListener Interface ***********************//
   @Override
   public void onClick(View mView) {
@@ -221,8 +279,9 @@ public class MapsActivity extends ActionBarActivity implements BikeMapListener,
       break;
 
       case R.id.infoview_favorite:
-        boolean bNowFav = ! _mSettings.isStationFavorite(_iStationShownId);
-        _mSettings.setStationFavorite(_iStationShownId, bNowFav);
+        boolean bNowFav = ! _mSettings.isStationFavorite(
+            _mSelectedStation.getId());
+        _mSettings.setStationFavorite(_mSelectedStation.getId(), bNowFav);
         updateFavoriteView();
 
         if (bNowFav) {
@@ -233,44 +292,14 @@ public class MapsActivity extends ActionBarActivity implements BikeMapListener,
           if (_mSettings.isFavStationsOnly() &&
               _mSettings.getFavStations().size() == 0) {
             hideStationInfo();
-            toggleLeftMenuFavorite(false);
+            _mSettings.setFavStationsOnly(false);
+            _mMenuAdapter.notifyDataSetChanged();
             _mBikeMap.ShowAllStations();
             lightMessage(R.string.map_nofav, true);
           }
         }
 
         updateFavStationWidget();
-      break;
- 
-      case R.id.mapsactivity_menu_allstations:
-        if (_mSettings.isFavStationsOnly()) {
-          toggleLeftMenuFavorite(false);
-          hideStationInfo();
-          _mBikeMap.ShowAllStations();
-        }
-        hideMenu();
-      break;
- 
-      case R.id.mapsactivity_menu_favstations:
-        if (! _mSettings.isFavStationsOnly()) {
-          if (_mSettings.getFavStations().size() == 0) {
-            lightMessage(R.string.map_nofav, true);
-          } else {
-            toggleLeftMenuFavorite(true);
-            hideStationInfo();
-            _mBikeMap.ShowFavStations();
-          }
-        }
-        hideMenu();
-      break;
- 
-      case R.id.mapsactivity_menu_help:
-        showHelpDialog();
-        hideMenu();
-      break;
- 
-      case R.id.mapsactivity_menu_rightpane:
-        hideMenu();
       break;
     }
   }
@@ -379,23 +408,11 @@ public class MapsActivity extends ActionBarActivity implements BikeMapListener,
   }
 
   protected void showMenu() {
-    if (_mMenu.getVisibility() == View.VISIBLE) return;
- 
-    Animation leftRight = AnimationUtils.loadAnimation(getApplicationContext(),
-        R.anim.left_right);
-
-    _mMenu.startAnimation(leftRight);
-    _mMenu.setVisibility(View.VISIBLE);
+    _mMenu.openDrawer(Gravity.LEFT);
   }
 
   protected void hideMenu() {
-    if (_mMenu.getVisibility() == View.GONE) return;
- 
-    Animation rightLeft = AnimationUtils.loadAnimation(getApplicationContext(),
-        R.anim.right_left);
-
-    _mMenu.startAnimation(rightLeft);
-    _mMenu.setVisibility(View.GONE);
+    _mMenu.closeDrawers();
   }
 
   protected void downloadMarkers(boolean bManual) {
@@ -458,7 +475,7 @@ public class MapsActivity extends ActionBarActivity implements BikeMapListener,
       mDistance.setText((int)(aDistance[0]) + " mètres");
     }
 
-    // Adress
+    // Address
     TextView mAddress = (TextView) _mStationInfo.
         findViewById(R.id.map_stationinfo_address);
     mAddress.setText(mStation.getAddress().toLowerCase());    
@@ -498,7 +515,6 @@ public class MapsActivity extends ActionBarActivity implements BikeMapListener,
         setVisibility(View.VISIBLE);
 
     // isFavorite
-    _iStationShownId = mStation.getId();
     updateFavoriteView();
 
     // Take
@@ -547,7 +563,7 @@ public class MapsActivity extends ActionBarActivity implements BikeMapListener,
         R.id.infoview_favorite);
     int iIcon = R.drawable.rate_star_big_off_holo_dark;
 
-    if (_mSettings.isStationFavorite(_iStationShownId)) {
+    if (_mSettings.isStationFavorite(_mSelectedStation.getId())) {
       iIcon = R.drawable.rate_star_big_on_holo_dark;
     }
     mFavImg.setImageResource(iIcon);
@@ -558,7 +574,7 @@ public class MapsActivity extends ActionBarActivity implements BikeMapListener,
     getApplicationContext().sendBroadcast(intent);
   }
 
-  //************************* Swipe TOuch Interface ************************//
+  //************************* Swipe Touch Interface ************************//
   @Override
   public void onSwipeRight(View mOrigin) {    
   }

@@ -65,7 +65,14 @@ Enfin, 2 boutons vous permettent de contrôler l\'app:</string>
 
     <string name="map_stationinfo_getdirections">Obtenir directions</string>
     <string name="map_stationinfo_toggle">Afficher/masquer infos complémentaires</string>
-    <string name="menu_favstations">Stations Favorites</string>
-    <string name="menu_allstations">Toutes les Stations</string>
-    <string name="menu_help">Aide</string>
+
+    <string-array name="menu_left_items">
+        <item>Toutes les Stations</item>
+        <item>Stations Favorites</item>
+        <item></item>
+        <item>Aide</item>
+    </string-array>
+
+    <string name="menu_open">Ouvrir Menu</string>
+    <string name="menu_close">Fermer Menu</string>
 </resources>
