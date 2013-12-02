@@ -7,7 +7,10 @@ import java.util.Hashtable;
 import java.util.Map;
 
 import com.google.android.gms.maps.model.PolylineOptions;
+import com.licryle.veliby.BikeMap.Station;
+import com.licryle.veliby.BikeMap.Station.Contract;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Environment;
@@ -26,17 +29,17 @@ public class Settings implements Serializable {
   protected int _iWidgetUpdateFrequency = 10;
 
   protected final String URL_FULL = "https://api.jcdecaux.com/vls/v1/stations" +
-      "?contract=Paris&apiKey=718b4e0e0b1f01af842ff54c38bed00eaa63ce3c";
-  protected final String URL_DYNAMIC = "http://veliby.berliat.fr/?c=1";
+      "?contract=%s&apiKey=718b4e0e0b1f01af842ff54c38bed00eaa63ce3c";
+  protected final String URL_DYNAMIC = "http://veliby.berliat.fr/?c=%d";
 
   protected final static Hashtable<Integer, Integer> _mBikeResources = 
   new Hashtable<Integer, Integer>() {
     private static final long serialVersionUID = -6956564905991202734L;
     {
-      put(0,R.color.infoview_nobike);
-      put(2,R.color.infoview_fewbikes);
-      put(4,R.color.infoview_somebikes);
-      put(1000,R.color.infoview_plentybikes);
+      put(0, R.color.infoview_nobike);
+      put(2, R.color.infoview_fewbikes);
+      put(4, R.color.infoview_somebikes);
+      put(1000, R.color.infoview_plentybikes);
     }
   };
 
@@ -114,12 +117,21 @@ catch (NameNotFoundException e) {}*/
     return _iWidgetUpdateFrequency;
   }
 
-  public String getURLDownloadDynamic() {
-    return URL_DYNAMIC;
+  public Contract getCurrentContract() {
+    return Contract.findContractById(_mPrefs.getInt("current_contract", 1));    
   }
 
-  public String getURLDownloadFull() {
-    return URL_FULL;
+  public void setCurrentContract(Contract mContract) {
+    _mPrefs.edit().putInt("current_contract", mContract.ordinal()).commit();
+  }
+
+  @SuppressLint("DefaultLocale")
+  public String getURLDownloadDynamic(Contract mContract) {
+    return String.format(URL_DYNAMIC, mContract.getId());
+  }
+
+  public String getURLDownloadFull(Contract mContract) {
+    return String.format(URL_FULL, mContract.getName());
   }
 
   public File getVelibyPath() {

@@ -14,6 +14,30 @@ class Station {
 
   static public $aContracts = [
       1 => "Paris",
+      2 => "Rouen",
+      3 => "Toulouse",
+      4 => "Luxembourg",
+      5 => "Valence",
+      6 => "Stockholm",
+      7 => "Goteborg",
+      8 => "Santander",
+      9 => "Amiens",
+      10 => "Lillestrom",
+      11 => "Mulhouse",
+      12 => "Lyon",
+      13 => "Ljubljana",
+      14 => "Seville",
+      15 => "Namur",
+      16 => "Nancy",
+      17 => "Creteil",
+      18 => "Bruxelles-Capitale",
+      19 => "Cergy-Pontoise",
+      20 => "Vilnius",
+      21 => "Toyama",
+      22 => "Kazan",
+      23 => "Marseille",
+      24 => "Nantes",
+      25 => "Besancon"
   ];
 
   public function __construct(Array $aStation) {

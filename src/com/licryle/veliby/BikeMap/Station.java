@@ -13,7 +13,31 @@ public class Station implements Serializable {
   private static final long serialVersionUID = -967068502674805726L;
 
 	public enum Contract {
-		PARIS (1, "Paris");
+    PARIS       (1, "Paris"),
+    ROUEN       (2, "Rouen"),
+    TOULOUSE    (3, "Toulouse"),
+    LUXEMBOURG  (4, "Luxembourg"),
+    VALENCE     (5, "Valence"),
+    STOCKHOLM   (6, "Stockholm"),
+    GOTEBORG    (7, "Goteborg"),
+    SANTANDER   (8, "Santander"),
+    AMIENS      (9, "Amiens"),
+    LILLESTROM  (10, "Lillestrom"),
+    MULHOUSE    (11, "Mulhouse"),
+    LYON        (12, "Lyon"),
+    LJUBLJANA   (13, "Ljubljana"),
+    SEVILLE     (14, "Seville"),
+    NAMUR       (15, "Namur"),
+    NANCY       (16, "Nancy"),
+    CRETEIL     (17, "Creteil"),
+    BRUXELLES   (18, "Bruxelles-Capitale"),
+    CERGY       (19, "Cergy-Pontoise"),
+    VILNIUS     (20, "Vilnius"),
+    TOYANA      (21, "Toyama"),
+    KAZAN       (22, "Kazan"),
+    MARSEILLE   (23, "Marseille"),
+    NANTES      (24, "Nantes"),
+    BESANCON    (25, "Besancon");
 
 		private final int _iId;
 		private final String _sName;
@@ -23,8 +47,8 @@ public class Station implements Serializable {
 			this._sName = sName;
 		}
 
-		private int getId() { return _iId; }
-		private String getName() { return _sName; }
+		public int getId() { return _iId; }
+		public String getName() { return _sName; }
 
 		public static Contract findContractByName(String sName) {
 			for (Contract c: Contract.values()) {

@@ -212,8 +212,10 @@ public class Provider extends AppWidgetProvider {
     intent.putExtra("receiver",
         (Parcelable) new DownloadStationsReceiver(new Handler()));
     intent.putExtra("requestor", this.toString());
-    intent.putExtra("url_full", mSettings.getURLDownloadFull());
-    intent.putExtra("url_dynamic", mSettings.getURLDownloadDynamic());
+    intent.putExtra("url_full",
+        mSettings.getURLDownloadFull(mSettings.getCurrentContract()));
+    intent.putExtra("url_dynamic",
+        mSettings.getURLDownloadDynamic(mSettings.getCurrentContract()));
     intent.putExtra("dl_static", mSettings.getStaticDeadLine());
     intent.putExtra("dl_dynamic", mSettings.getDynamicDeadLine());
     intent.putExtra("stations_file",
