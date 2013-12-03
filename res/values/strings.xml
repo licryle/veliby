@@ -67,10 +67,44 @@ Enfin, 2 boutons vous permettent de contrôler l\'app:</string>
     <string name="map_stationinfo_toggle">Afficher/masquer infos complémentaires</string>
 
     <string-array name="menu_left_items">
-        <item>Toutes les Stations</item>
-        <item>Stations Favorites</item>
+        <item>menu_left_modes:force_expand:one_selection:Modes</item>
         <item></item>
         <item>Aide</item>
+        <item></item>
+        <item>menu_left_cities:normal:one_selection:Villes</item>
+    </string-array>
+
+    <string-array name="menu_left_modes">
+        <item>Toutes les Stations</item>
+        <item>Stations Favorites</item>
+    </string-array>
+
+    <string-array name="menu_left_cities">
+        <item>Paris</item>
+        <item>Rouen</item>
+        <item>Toulouse</item>
+        <item>Luxembourg</item>
+        <item>Valence</item>
+        <item>Stockholm</item>
+        <item>Goteborg</item>
+        <item>Santander</item>
+        <item>Amiens</item>
+        <item>Lillestrom</item>
+        <item>Mulhouse</item>
+        <item>Lyon</item>
+        <item>Ljubljana</item>
+        <item>Seville</item>
+        <item>Namur</item>
+        <item>Nancy</item>
+        <item>Creteil</item>
+        <item>Bruxelles-Capitale</item>
+        <item>Cergy-Pontoise</item>
+        <item>Vilnius</item>
+        <item>Toyama</item>
+        <item>Kazan</item>
+        <item>Marseille</item>
+        <item>Nantes</item>
+        <item>Besancon</item>
     </string-array>
 
     <string name="menu_open">Ouvrir Menu</string>

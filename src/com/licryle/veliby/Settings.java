@@ -7,7 +7,6 @@ import java.util.Hashtable;
 import java.util.Map;
 
 import com.google.android.gms.maps.model.PolylineOptions;
-import com.licryle.veliby.BikeMap.Station;
 import com.licryle.veliby.BikeMap.Station.Contract;
 
 import android.annotation.SuppressLint;
@@ -122,7 +121,7 @@ catch (NameNotFoundException e) {}*/
   }
 
   public void setCurrentContract(Contract mContract) {
-    _mPrefs.edit().putInt("current_contract", mContract.ordinal()).commit();
+    _mPrefs.edit().putInt("current_contract", mContract.getId()).commit();
   }
 
   @SuppressLint("DefaultLocale")

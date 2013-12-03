@@ -141,16 +141,23 @@ public class StationsInfoService extends IntentService {
     File mStationsFile = new File(sStationsFile);
     int iDlStatic = intent.getIntExtra("dl_static", 1000);
     int iDlDynamic = intent.getIntExtra("dl_dynamic", 1000);
+    int iContract = intent.getIntExtra("contract_id", 0);
 
     _loadStations(mStationsFile, iDlDynamic);
 
     boolean bStaticExpired = _mStations.isStaticExpired(iDlStatic);
     boolean bDynamicExpired = _mStations.isDynamicExpired(iDlDynamic);
 
+    boolean bDiffContract = false;
+    try {
+      bDiffContract = iContract != _mStations.entrySet().iterator().
+          next().getValue().getContract().getId();
+    } catch (Exception e) {}
+
     int iResult;
-    if (bStaticExpired || bDynamicExpired) {
-      iResult = _downloadStations(bStaticExpired, sUrlFull, sUrlDynamic,
-          mStationsFile);
+    if (bStaticExpired || bDynamicExpired || bDiffContract) {
+      iResult = _downloadStations(bStaticExpired || bDiffContract, sUrlFull,
+          sUrlDynamic, mStationsFile);
     } else {
       iResult = SUCCESS;
     }
@@ -176,8 +183,13 @@ public class StationsInfoService extends IntentService {
   
     Stations mNewStations = new Stations();
     for (int i=0; i < mJSon.length(); i++) {
-    	Station mStation = new Station(mJSon.getJSONObject(i));
-    	mNewStations.put(mStation.getId(), mStation);
+      try {
+      	Station mStation = new Station(mJSon.getJSONObject(i));
+      	mNewStations.put(mStation.getId(), mStation);
+      } catch (Exception e) {
+        Log.i("StationsInfoService", "1 station rejected, JSON invalid. " +
+            e.getMessage());
+      }
     }
     mNewStations.setLastUpdate(Calendar.getInstance().getTime());
 

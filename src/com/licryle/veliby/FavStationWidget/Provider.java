@@ -218,6 +218,7 @@ public class Provider extends AppWidgetProvider {
         mSettings.getURLDownloadDynamic(mSettings.getCurrentContract()));
     intent.putExtra("dl_static", mSettings.getStaticDeadLine());
     intent.putExtra("dl_dynamic", mSettings.getDynamicDeadLine());
+    intent.putExtra("contract_id", mSettings.getCurrentContract().getId());
     intent.putExtra("stations_file",
         mSettings.getStationsFile().getAbsolutePath());
 

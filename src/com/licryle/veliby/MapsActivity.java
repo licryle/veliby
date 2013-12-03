@@ -2,11 +2,11 @@ package com.licryle.veliby;
 
 import java.io.File;
 
+import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
 import android.content.res.Configuration;
-import android.graphics.Color;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.v4.app.ActionBarDrawerToggle;
@@ -20,14 +20,14 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
-import android.widget.ArrayAdapter;
+import android.widget.ExpandableListView;
+import android.widget.ExpandableListView.OnChildClickListener;
+import android.widget.ExpandableListView.OnGroupClickListener;
 import android.widget.ImageView;
-import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -38,12 +38,16 @@ import com.google.android.gms.maps.model.Marker;
 import com.licryle.veliby.BikeMap.BikeMap;
 import com.licryle.veliby.BikeMap.BikeMapListener;
 import com.licryle.veliby.BikeMap.Station;
+import com.licryle.veliby.BikeMap.Station.Contract;
 import com.licryle.veliby.BikeMap.Stations;
+import com.licryle.veliby.UI.ExpandableDrawerAdapter;
+import com.licryle.veliby.UI.ExpandableDrawerAdapter.ExpandNode;
 import com.licryle.veliby.UI.OnSwipeListener;
 import com.licryle.veliby.UI.SwipeTouchDectector;
 
 public class MapsActivity extends ActionBarActivity implements BikeMapListener,
-    android.view.View.OnClickListener, OnSwipeListener, OnItemClickListener {
+    android.view.View.OnClickListener, OnSwipeListener, OnChildClickListener, 
+    OnGroupClickListener {
   protected static final String FAVSTATION_WIDGET_UPDATE =
       "com.licryle.veliby.favstationwidget.WIDGET_UPDATE";
   protected BikeMap _mBikeMap = null;
@@ -52,8 +56,8 @@ public class MapsActivity extends ActionBarActivity implements BikeMapListener,
   protected View _mInfoView = null;
 
   protected DrawerLayout _mMenu = null;
-  protected ListView _mMenuList = null;
-  protected ArrayAdapter<String> _mMenuAdapter = null;
+  protected ExpandableListView _mMenuList = null;
+  protected ExpandableDrawerAdapter _mMenuAdapter = null;
   protected ActionBarDrawerToggle _mMenuToggle = null;
 
   protected Station _mSelectedStation = null;
@@ -62,6 +66,9 @@ public class MapsActivity extends ActionBarActivity implements BikeMapListener,
   protected Settings _mSettings = null;
   protected SwipeTouchDectector _mSwipeDetector;
 
+  protected final static int MENU_MODES = 0;
+  protected final static int MENU_HELP = 2;
+  protected final static int MENU_CITY = 4;
 
   //************************* Activity Overrides ***************************//
   @Override
@@ -178,7 +185,7 @@ public class MapsActivity extends ActionBarActivity implements BikeMapListener,
   //************************** LeftMenu Controls ***************************//
   public void createMenu() {
     _mMenu = (DrawerLayout) findViewById(R.id.drawer_layout);
-    _mMenuList = (ListView) findViewById(R.id.mapsactivity_menu);
+    _mMenuList = (ExpandableListView) findViewById(R.id.mapsactivity_menu);
 
     _mMenuToggle = new ActionBarDrawerToggle(
         this, _mMenu, R.drawable.ic_drawer,
@@ -190,76 +197,21 @@ public class MapsActivity extends ActionBarActivity implements BikeMapListener,
     actionBar.setDisplayHomeAsUpEnabled(true);
     actionBar.setHomeButtonEnabled(true);
  
-    String[] aItems = getResources().getStringArray(R.array.menu_left_items);
     // Set the adapter for the list view
-    _mMenuAdapter = new ArrayAdapter<String> (this,
-        R.layout.activity_maps_menu_item, aItems) {
-      @Override
-      public View getView(int position, View convertView, ViewGroup parent) {    
-        TextView itemView = (TextView) super.getView(position, convertView,
-            parent);
-
-        if (itemView.getText().equals("")) {
-          return getLayoutInflater().inflate(
-              R.layout.activity_maps_menu_divider, null);
-        }
-
-        boolean bFavOnly = _mSettings.isFavStationsOnly();
-        if ( (position == 0 && ! bFavOnly) ||
-            (position == 1 && bFavOnly)) {
-          itemView.setBackgroundColor(
-              getResources().getColor(R.color.menu_button_pressed));
-          itemView.setTextColor(Color.WHITE);
-        } else {
-          itemView.setBackgroundColor(Color.TRANSPARENT);
-          itemView.setTextColor(
-              getResources().getColor(R.color.veliby_purple_light));          
-        }
+    _mMenuAdapter = new ExpandableDrawerAdapter(this);
+    _mMenuList.setGroupIndicator(
+        getResources().getDrawable(R.drawable.activity_maps_menu_group));
     
-        return itemView;
-      }
-    };
-
     _mMenuList.setAdapter(_mMenuAdapter);
-    _mMenuList.setOnItemClickListener(this);
-  }
+    _mMenuList.setOnChildClickListener(this);
+    _mMenuList.setOnGroupClickListener(this);
 
-  //*********************** Menu Items Click Interface **********************//
-  @Override
-  public void onItemClick(AdapterView<?> parent, View view, int position,
-      long id) {
-    parent.requestFocusFromTouch();
-
-    switch (position) {
-      case 0:
-        if (_mSettings.isFavStationsOnly()) {
-          _mSettings.setFavStationsOnly(false);
-          hideStationInfo();
-          _mBikeMap.ShowAllStations();
-        }
-        hideMenu();
-        _mMenuAdapter.notifyDataSetChanged();
-      break;
- 
-      case 1:
-        if (! _mSettings.isFavStationsOnly()) {
-          if (_mSettings.getFavStations().size() == 0) {
-            lightMessage(R.string.map_nofav, true);
-          } else {
-            _mSettings.setFavStationsOnly(true);
-            hideStationInfo();
-            _mBikeMap.ShowFavStations();
-          }
-        }
-        hideMenu();
-        _mMenuAdapter.notifyDataSetChanged();
-      break;
- 
-      case 3:
-        showHelpDialog();
-        hideMenu();
-      break;
-    }
+    // specific controls to this app
+    _mMenuList.expandGroup(MENU_MODES); // Modes menu always expanded
+    _mMenuAdapter.getChild(MENU_MODES, _mSettings.isFavStationsOnly() ? 1 : 0).
+        setSelected(true);
+    _mMenuAdapter.getChild(MENU_CITY, 
+        _mSettings.getCurrentContract().getId() - 1).setSelected(true);
   }
 
   //********************** OnClickListener Interface ***********************//
@@ -598,5 +550,85 @@ public class MapsActivity extends ActionBarActivity implements BikeMapListener,
     if (_mStationInfo.findViewById(mOrigin.getId()) != null) {
       hideExtendedStationInfo();
     }
+  }
+
+  //*********************** Expandable Drawer Clicks ***********************//
+  @Override
+  public boolean onChildClick(ExpandableListView parent, View v,
+      int groupPosition, int childPosition, long id) {
+
+    ExpandNode mGroup = _mMenuAdapter.getGroup(groupPosition);
+    ExpandNode mChild = _mMenuAdapter.getChild(groupPosition, childPosition);
+
+    if (groupPosition == MENU_MODES) {
+      switch (childPosition) {
+        case 0:
+          if (_mSettings.isFavStationsOnly()) {
+            _mSettings.setFavStationsOnly(false);
+            hideStationInfo();
+            _mBikeMap.ShowAllStations();
+          }
+          hideMenu();
+        break;
+   
+        case 1:
+          if (! _mSettings.isFavStationsOnly()) {
+            if (_mSettings.getFavStations().size() == 0) {
+              lightMessage(R.string.map_nofav, true);
+              hideMenu();
+              _mMenuAdapter.notifyDataSetChanged();
+              return false;
+            } else {
+              _mSettings.setFavStationsOnly(true);
+              hideStationInfo();
+              _mBikeMap.ShowFavStations();
+            }
+          }
+          hideMenu();
+        break;
+      }
+    } else if (groupPosition == MENU_CITY) {
+      int iNewContract = childPosition + 1;
+      if (iNewContract != _mSettings.getCurrentContract().getId()) {
+        _mSettings.setCurrentContract(
+            Contract.findContractById(childPosition + 1));
+        _mBikeMap.downloadMarkers();
+      }
+      hideMenu();
+    }
+ 
+    switch (mGroup.getSelectedMode()) {
+      case 0:
+      break;
+
+      case 1:
+        for (ExpandNode miChild : mGroup.Children()) {
+          miChild.setSelected(false);
+        }
+        mChild.setSelected(true);
+      break;
+     
+      case 2:
+        mChild.setSelected(! mChild.isSelected());
+      break;
+    }
+
+
+    _mMenuAdapter.notifyDataSetChanged();
+    return false;
+  }
+
+  @Override
+  public boolean onGroupClick(ExpandableListView parent, View v,
+      int groupPosition, long id) {
+    switch (groupPosition) {
+      case MENU_MODES: return true;
+      case MENU_HELP: 
+        showHelpDialog();
+        hideMenu();
+      break;
+    }
+
+    return false;
   }
 }

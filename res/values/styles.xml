@@ -18,7 +18,7 @@
         <!-- All customizations that are NOT specific to a particular API-level can go here. -->
     </style>
 
-    <style name="MapsActivity_Menu_Button">
+    <style name="MapsActivity_Menu_Item">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:gravity">center_vertical</item>
@@ -26,6 +26,9 @@
         <item name="android:background">@android:color/transparent</item>
         <item name="android:padding">7sp</item>
         <item name="android:textSize">18sp</item>
+    </style>
+    <style name="MapsActivity_Menu_Group" parent="@style/MapsActivity_Menu_Item">
+        <item name="android:paddingLeft">50sp</item>
     </style>
 
     <style name="MapsActivity_Menu_Divider">
