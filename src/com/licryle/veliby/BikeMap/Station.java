@@ -13,42 +13,45 @@ public class Station implements Serializable {
   private static final long serialVersionUID = -967068502674805726L;
 
 	public enum Contract {
-    PARIS       (1, "Paris"),
-    ROUEN       (2, "Rouen"),
-    TOULOUSE    (3, "Toulouse"),
-    LUXEMBOURG  (4, "Luxembourg"),
-    VALENCE     (5, "Valence"),
-    STOCKHOLM   (6, "Stockholm"),
-    GOTEBORG    (7, "Goteborg"),
-    SANTANDER   (8, "Santander"),
-    AMIENS      (9, "Amiens"),
-    LILLESTROM  (10, "Lillestrom"),
-    MULHOUSE    (11, "Mulhouse"),
-    LYON        (12, "Lyon"),
-    LJUBLJANA   (13, "Ljubljana"),
-    SEVILLE     (14, "Seville"),
-    NAMUR       (15, "Namur"),
-    NANCY       (16, "Nancy"),
-    CRETEIL     (17, "Creteil"),
-    BRUXELLES   (18, "Bruxelles-Capitale"),
-    CERGY       (19, "Cergy-Pontoise"),
-    VILNIUS     (20, "Vilnius"),
-    TOYANA      (21, "Toyama"),
-    KAZAN       (22, "Kazan"),
-    MARSEILLE   (23, "Marseille"),
-    NANTES      (24, "Nantes"),
-    BESANCON    (25, "Besancon");
+    PARIS       (1, "Paris",                48.85568,   2.346246),
+    ROUEN       (2, "Rouen",                49.443232,  1.099971),
+    TOULOUSE    (3, "Toulouse",             43.604652,  1.444209),
+    LUXEMBOURG  (4, "Luxembourg",           49.611621,  6.1319346),
+    VALENCE     (5, "Valence",              39.4699075, -0.3762881),
+    STOCKHOLM   (6, "Stockholm",            59.32893,   18.06491),
+    GOTEBORG    (7, "Goteborg",             57.70887,   11.97456),
+    SANTANDER   (8, "Santander",            43.4623057, -3.8099803),
+    AMIENS      (9, "Amiens",               49.894067,  2.295753),
+    LILLESTROM  (10, "Lillestrom",          59.9559696, 11.0503785),
+    MULHOUSE    (11, "Mulhouse",            47.750839,  7.335888),
+    LYON        (12, "Lyon",                45.764043,  4.835659),
+    LJUBLJANA   (13, "Ljubljana",           46.0564509, 14.5080702),
+    SEVILLE     (14, "Seville",             37.3880961, -5.9823299),
+    NAMUR       (15, "Namur",               50.4673883, 4.8719854),
+    NANCY       (16, "Nancy",               48.692054,  6.184417),
+    CRETEIL     (17, "Creteil",             48.790367,  2.455572),
+    BRUXELLES   (18, "Bruxelles-Capitale",  50.8503463, 4.3517211),
+    CERGY       (19, "Cergy-Pontoise",      49.038946,  2.075368),
+    VILNIUS     (20, "Vilnius",             54.6871555, 25.2796514),
+    TOYANA      (21, "Toyama",              36.6959518, 137.2136768),
+    KAZAN       (22, "Kazan",               55.8005556, 49.1055556),
+    MARSEILLE   (23, "Marseille",           43.296482,  5.36978),
+    NANTES      (24, "Nantes",              47.218371, -1.553621),
+    BESANCON    (25, "Besancon",            47.237829,  6.0240539);
 
 		private final int _iId;
 		private final String _sName;
+		private final LatLng _Position;
 
-		Contract(int iId, String sName) {
+		Contract(int iId, String sName, double dLat, double dLng) {
 			this._iId = iId;
 			this._sName = sName;
+			this._Position = new LatLng(dLat, dLng);
 		}
 
 		public int getId() { return _iId; }
-		public String getName() { return _sName; }
+    public String getName() { return _sName; }
+    public LatLng getPosition() { return _Position; }
 
 		public static Contract findContractByName(String sName) {
 			for (Contract c: Contract.values()) {

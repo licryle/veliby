@@ -146,6 +146,8 @@ public class Provider extends AppWidgetProvider {
     remoteViews.removeAllViews(R.id.widget_items_list);
     remoteViews.setOnClickPendingIntent(R.id.widget_menu_refresh,
         _createDataUpdateIntent(_mContext));
+    remoteViews.setOnClickPendingIntent(R.id.widget_menu_icon,
+        _createOpenAppIntent(_mContext, 0));
 
     Settings mSettings = Settings.getInstance(_mContext);
     ArrayList<Integer> aFavStations = mSettings.getFavStations();
@@ -170,18 +172,16 @@ public class Provider extends AppWidgetProvider {
         for(Integer i : aFavStations) {
           Station mStation = mStations.get(i);
 
-          Intent mIntent = new Intent(_mContext, MapsActivity.class);
-          mIntent.putExtra("fav_station", i);
-          PendingIntent mPendingIntent = PendingIntent.getActivity(_mContext,
-              0, mIntent, 0);
-    
-          RemoteViews mStationView = _buildStationView(mStation);
-          mStationView.setOnClickPendingIntent(R.id.widget_station_item,
-              mPendingIntent);
-    
-          remoteViews.addView(R.id.widget_items_list, mStationView);
-          /*Intent svcIntent = new Intent(context, Service.class);
-          remoteViews.setRemoteAdapter(R.id.widget_stationslist, svcIntent);*/
+          if (mStation != null) {
+            RemoteViews mStationView = _buildStationView(mStation);
+            mStationView.setOnClickPendingIntent(R.id.widget_station_item,
+                _createOpenAppIntent(_mContext, i));
+      
+            remoteViews.addView(R.id.widget_items_list, mStationView);
+            /*Intent svcIntent = new Intent(context, Service.class);
+            remoteViews.setRemoteAdapter(R.id.widget_stationslist, svcIntent);
+            */
+          }
         }
       }
     }
@@ -223,6 +223,14 @@ public class Provider extends AppWidgetProvider {
         mSettings.getStationsFile().getAbsolutePath());
 
     return intent;
+  }
+
+  private PendingIntent _createOpenAppIntent(Context mContext, int iFavStation) {
+    Intent mIntent = new Intent(mContext, MapsActivity.class);
+
+    if (iFavStation > 0) mIntent.putExtra("fav_station", iFavStation);
+
+    return PendingIntent.getActivity(mContext, 0, mIntent, 0);    
   }
 
   private boolean _downloadMarkers() {

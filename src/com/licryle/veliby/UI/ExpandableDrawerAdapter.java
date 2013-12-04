@@ -139,14 +139,12 @@ public class ExpandableDrawerAdapter extends BaseExpandableListAdapter {
   public View getGroupView(int groupPosition, boolean isExpanded,
                            View convertView, ViewGroup parent) {
     ExpandNode mGroup = getGroup(groupPosition);
-    if (convertView == null) {
-      if (mGroup.Name().equals("")) {
-        return inflateDivider();
-      } else if (mGroup.Children().length == 0) {
-        convertView = inflateItem();
-      } else {
-        convertView = inflateGroup();
-      }
+    if (mGroup.Name().equals("")) {
+      return inflateDivider();
+    } else if (mGroup.Children().length == 0) {
+      convertView = inflateItem();
+    } else {
+      convertView = inflateGroup();
     }
 
     ((TextView) convertView).setText(mGroup.Name());

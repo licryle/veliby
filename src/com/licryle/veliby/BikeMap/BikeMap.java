@@ -108,6 +108,15 @@ public class BikeMap implements OnMarkerClickListener, OnMapClickListener,
     return true;
   }
 
+  public void moveCameraTo(LatLng mPosition, int iZoom) {
+    if (mPosition == null) return;
+
+    CameraUpdate cu = CameraUpdateFactory.newCameraPosition(
+        new CameraPosition(mPosition, iZoom, 0, 0));
+
+    updateCamera(cu);
+  }
+
   public void updateCamera(CameraUpdate mCameraUpdate) {
     _mMap.animateCamera(mCameraUpdate, 700, null);
   }
@@ -159,12 +168,7 @@ public class BikeMap implements OnMarkerClickListener, OnMapClickListener,
     _mMap.setOnMarkerClickListener(this);
     _mMap.setOnMapClickListener(this);
 
-    LatLng mlastKnownPos = Util.getLastPosition(_mContext);
-    if (mlastKnownPos != null) {
-      CameraUpdate cu = CameraUpdateFactory.newCameraPosition(
-          new CameraPosition(mlastKnownPos, 16, 0, 0));
-      updateCamera(cu);
-    }
+    moveCameraTo(Util.getLastPosition(_mContext), 16);
 
     return true;
   }

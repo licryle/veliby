@@ -24,7 +24,8 @@ Enfin, 2 boutons vous permettent de contrôler l\'app:</string>
     <string name="welcome_refresh">Permet de rafraichir les données. La mise à jour est automatique à chaque lancement/changement d\'application.</string>
     <string name="welcome_mode_find">Les couleurs indiquent le nombre de vélos. Cliquez pour alterner.</string>
     <string name="welcome_mode_return">Les couleurs indiquent le nombre de points d\'attache. Cliquez pour alterner.</string>
-    
+    <string name="welcome_choosecity">Choisissez une ville à gauche</string>
+
     <string name="action_mode">Mode d\'affichage</string>
     <string name="action_mode_find">Vélos disponibles</string>
     <string name="action_mode_return">Points d\'attaches disponibles</string>
@@ -67,9 +68,9 @@ Enfin, 2 boutons vous permettent de contrôler l\'app:</string>
     <string name="map_stationinfo_toggle">Afficher/masquer infos complémentaires</string>
 
     <string-array name="menu_left_items">
-        <item>menu_left_modes:force_expand:one_selection:Modes</item>
-        <item></item>
         <item>Aide</item>
+        <item></item>
+        <item>menu_left_modes:force_expand:one_selection:Modes</item>
         <item></item>
         <item>menu_left_cities:normal:one_selection:Villes</item>
     </string-array>

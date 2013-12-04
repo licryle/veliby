@@ -2,9 +2,13 @@ package com.licryle.veliby;
 
 import java.io.File;
 
+import org.apache.http.MethodNotSupportedException;
+
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.DialogInterface.OnClickListener;
+import android.content.DialogInterface;
+import android.content.DialogInterface.OnDismissListener;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.location.Location;
@@ -66,8 +70,8 @@ public class MapsActivity extends ActionBarActivity implements BikeMapListener,
   protected Settings _mSettings = null;
   protected SwipeTouchDectector _mSwipeDetector;
 
-  protected final static int MENU_MODES = 0;
-  protected final static int MENU_HELP = 2;
+  protected final static int MENU_MODES = 2;
+  protected final static int MENU_HELP = 0;
   protected final static int MENU_CITY = 4;
 
   //************************* Activity Overrides ***************************//
@@ -79,12 +83,13 @@ public class MapsActivity extends ActionBarActivity implements BikeMapListener,
     _mSettings = Settings.getInstance(this);
     _mSwipeDetector = new SwipeTouchDectector(getApplicationContext(), 100, 100);
     _mSwipeDetector.addListener(this);
-
-    firstStart();
+    _updateAppTitle();
 
     // Start - Create Control Views
     createMenu();
-    
+
+    firstStart();
+
     _mStationInfo = findViewById(R.id.map_stationinfo);
     _mStationInfo.findViewById(R.id.infoview_favorite).setOnClickListener(this);
     _mStationInfo.findViewById(R.id.map_stationinfo_toggle).
@@ -207,6 +212,7 @@ public class MapsActivity extends ActionBarActivity implements BikeMapListener,
     _mMenuList.setOnGroupClickListener(this);
 
     // specific controls to this app
+    _mMenuList.expandGroup(MENU_HELP); // Trick to get the correct state
     _mMenuList.expandGroup(MENU_MODES); // Modes menu always expanded
     _mMenuAdapter.getChild(MENU_MODES, _mSettings.isFavStationsOnly() ? 1 : 0).
         setSelected(true);
@@ -282,6 +288,19 @@ public class MapsActivity extends ActionBarActivity implements BikeMapListener,
            .setTitle(R.string.welcome_title);
 
     AlertDialog dialog = builder.create();
+
+    if (_mSettings.isFirstStart() ) {
+      dialog.setOnDismissListener(new OnDismissListener() {
+        @Override
+        public void onDismiss(DialogInterface dialog) {
+          _mMenuList.expandGroup(MENU_CITY);
+          showMenu();
+  
+          lightMessage(R.string.welcome_choosecity, true);
+        }
+      });
+    }
+
     dialog.show();
   }
  
@@ -590,10 +609,17 @@ public class MapsActivity extends ActionBarActivity implements BikeMapListener,
     } else if (groupPosition == MENU_CITY) {
       int iNewContract = childPosition + 1;
       if (iNewContract != _mSettings.getCurrentContract().getId()) {
-        _mSettings.setCurrentContract(
-            Contract.findContractById(childPosition + 1));
+        Contract mContract = Contract.findContractById(childPosition + 1);
+        _mSettings.setCurrentContract(mContract);
+        _updateAppTitle();
+        _mBikeMap.moveCameraTo(mContract.getPosition(), 13);
+        lightMessage(R.string.action_reload_start, true);
         _mBikeMap.downloadMarkers();
+      } else {
+        _mBikeMap.moveCameraTo(
+            _mSettings.getCurrentContract().getPosition(),13);
       }
+
       hideMenu();
     }
  
@@ -618,11 +644,17 @@ public class MapsActivity extends ActionBarActivity implements BikeMapListener,
     return false;
   }
 
+  private void _updateAppTitle() {
+    Contract mContract = _mSettings.getCurrentContract();
+    String sAppName = getResources().getString(R.string.app_name);
+    setTitle(sAppName + " - " + mContract.getName());
+  }
+
   @Override
   public boolean onGroupClick(ExpandableListView parent, View v,
       int groupPosition, long id) {
     switch (groupPosition) {
-      case MENU_MODES: return true;
+      //case MENU_MODES: return true;
       case MENU_HELP: 
         showHelpDialog();
         hideMenu();
