@@ -152,37 +152,37 @@ public class Provider extends AppWidgetProvider {
     Settings mSettings = Settings.getInstance(_mContext);
     ArrayList<Integer> aFavStations = mSettings.getFavStations();
 
-    if (aFavStations.size() == 0) {
-      remoteViews.setViewVisibility(R.id.widget_noinfo, View.GONE);
-      remoteViews.setViewVisibility(R.id.widget_nofavstation, View.VISIBLE);
-
-      Intent mIntent = new Intent(_mContext, MapsActivity.class);
-      PendingIntent mPendingIntent = PendingIntent.getActivity(_mContext,
-          0, mIntent, 0);
-      remoteViews.setOnClickPendingIntent(R.id.widget_nofavstation,
-          mPendingIntent);
+    if (mStations == null) {
+      remoteViews.setViewVisibility(R.id.widget_noinfo, View.VISIBLE);        
     } else {
+      remoteViews.setViewVisibility(R.id.widget_noinfo, View.GONE);
       remoteViews.setViewVisibility(R.id.widget_nofavstation, View.GONE);
 
-      if (mStations == null) {
-        remoteViews.setViewVisibility(R.id.widget_noinfo, View.VISIBLE);        
-      } else {
-        remoteViews.setViewVisibility(R.id.widget_noinfo, View.GONE);
+      int iNbFavs = 0;
+      for(Integer i : aFavStations) {
+        Station mStation = mStations.get(i);
 
-        for(Integer i : aFavStations) {
-          Station mStation = mStations.get(i);
-
-          if (mStation != null) {
-            RemoteViews mStationView = _buildStationView(mStation);
-            mStationView.setOnClickPendingIntent(R.id.widget_station_item,
-                _createOpenAppIntent(_mContext, i));
-      
-            remoteViews.addView(R.id.widget_items_list, mStationView);
-            /*Intent svcIntent = new Intent(context, Service.class);
-            remoteViews.setRemoteAdapter(R.id.widget_stationslist, svcIntent);
-            */
-          }
+        if (mStation != null) {
+          RemoteViews mStationView = _buildStationView(mStation);
+          mStationView.setOnClickPendingIntent(R.id.widget_station_item,
+              _createOpenAppIntent(_mContext, i));
+    
+          remoteViews.addView(R.id.widget_items_list, mStationView);
+          /*Intent svcIntent = new Intent(context, Service.class);
+          remoteViews.setRemoteAdapter(R.id.widget_stationslist, svcIntent);
+          */
+          iNbFavs++;
         }
+      }
+
+      if (iNbFavs == 0) {
+        remoteViews.setViewVisibility(R.id.widget_nofavstation, View.VISIBLE);
+
+        Intent mIntent = new Intent(_mContext, MapsActivity.class);
+        PendingIntent mPendingIntent = PendingIntent.getActivity(_mContext,
+            0, mIntent, 0);
+        remoteViews.setOnClickPendingIntent(R.id.widget_nofavstation,
+            mPendingIntent);
       }
     }
 

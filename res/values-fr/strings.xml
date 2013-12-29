@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">Veliby</string>
+
+    <string name="ok">D\'accord!</string>
+
+    <string name="playservice_issue_title">Aïe!</string>
+    <string name="playservice_issue_content">Il semblerait que vous ayez un problème avec les "Google Play Services". Le plan ne se chargera donc pas, mais l\'écran suivant vous invitera à vous rendre sur le Google Play Store pour mettre à jour "Google Play Services".</string>
+
+    <string name="welcome_title">Bienvenue sur Véliby!</string>
+    <string name="welcome_introduction">Véliby est une application simple et concise qui vous montre l\'état des stations autour de vous grâce à de simple codes couleurs:</string>
+    <string name="welcome_plenty">5 vélos/points d\'attache ou plus, allez-y!</string>
+    <string name="welcome_some">3&#8211;4 vélos/points d\'attache, attention!</string>
+    <string name="welcome_few">1&#8211;2 vélos/points d\'attache, déconseillé&#8230;</string>
+    <string name="welcome_none">Pas de vélos/points d\'attache :(</string>
+    <string name="welcome_closed">Station fermée</string>
+    <string name="welcome_faved">Station faisant partie de vos favoris. Utilisez un widget pour voire la liste.</string>
+    <string name="welcome_unfaved">Station ne faisant pas partie de vos favoris.</string>
+
+    <string name="welcome_controls">N\'hésitez pas à cliquer sur une station pour avoir plus d\'informations!
+        
+Enfin, 2 boutons vous permettent de contrôler l\'app:</string>
+    <string name="welcome_refresh">Permet de rafraichir les données. La mise à jour est automatique à chaque lancement/changement d\'application.</string>
+    <string name="welcome_mode_find">Les couleurs indiquent le nombre de vélos. Cliquez pour alterner.</string>
+    <string name="welcome_mode_return">Les couleurs indiquent le nombre de points d\'attache. Cliquez pour alterner.</string>
+    <string name="welcome_choosecity">Choisissez une ville à gauche</string>
+
+    <string name="action_mode">Mode d\'affichage</string>
+    <string name="action_mode_find">Vélos disponibles</string>
+    <string name="action_mode_return">Points d\'attaches disponibles</string>
+
+    <string name="action_reload">Mettre à jour</string>
+    <string name="action_reload_start">Mise à jour en cours</string>
+    <string name="action_reload_datarecent">Données déjà à jour</string>
+    <string name="action_reload_complete">Mise à jour terminée</string>
+    <string name="action_reload_failure">Mise à jour échouée: veuillez vérifier votre connection internet</string>
+    
+    <string name="action_faved">Station maintenant favorite, retrouvez la sur un widget</string>
+    <string name="action_unfaved">Station retirée de vos favoris</string>
+
+    <string name="welcome_ok">Compris!</string>
+
+    <string name="refresh">Mettre à jour</string>
+    <string name="refresh_date">Jamais mis à jour</string>
+    
+    <string name="infoview_bonus">Bonus de 15 minutes ajouté à votre compte
+        lors du dépot d\'un vélo dans cette station!</string>
+    <string name="infoview_bank">Station disposant d\'une borne achat de 
+        ticket/rechargement de forfaits.</string>
+    <string name="infoview_stationclosed">Station fermée!</string>
+    <string name="infoview_noinfo">Information indisponible</string>
+    <string name="infoview_favorite">Station favorite</string>
+    
+    <string name="widget_stationclosed">Fermée</string>
+    <string name="widget_nofavstation">Aucune station favorite, ajoutez les dans Veliby</string>
+
+    <string-array name="color_mode_array">
+        <item>Trouver un vélo</item>
+        <item>Rendre un vélo</item>
+    </string-array>
+
+    <string name="map_nofav">Aucune station favorite, ajoutez en une pour activer cette vue. Pour cela, choisissez une station et cliquez sur l\'étoile.</string>
+    <string name="map_directionsfailed">Impossible d\'obtenir les directions.</string>
+    <string name="map_nodistance">Distance indisponible</string>
+    <string name="map_meters">mètres</string>
+
+    <string name="map_stationinfo_getdirections">Obtenir directions</string>
+    <string name="map_stationinfo_toggle">Afficher/masquer infos complémentaires</string>
+
+    <string-array name="menu_left_items">
+        <item>Aide</item>
+        <item></item>
+        <item>menu_left_modes:force_expand:one_selection:Modes</item>
+        <item></item>
+        <item>menu_left_cities:normal:one_selection:Villes</item>
+    </string-array>
+
+    <string-array name="menu_left_modes">
+        <item>Toutes les Stations</item>
+        <item>Stations Favorites</item>
+    </string-array>
+
+    <string-array name="menu_left_cities">
+        <item>Paris</item>
+        <item>Rouen</item>
+        <item>Toulouse</item>
+        <item>Luxembourg</item>
+        <item>Valence</item>
+        <item>Stockholm</item>
+        <item>Goteborg</item>
+        <item>Santander</item>
+        <item>Amiens</item>
+        <item>Lillestrom</item>
+        <item>Mulhouse</item>
+        <item>Lyon</item>
+        <item>Ljubljana</item>
+        <item>Seville</item>
+        <item>Namur</item>
+        <item>Nancy</item>
+        <item>Creteil</item>
+        <item>Bruxelles-Capitale</item>
+        <item>Cergy-Pontoise</item>
+        <item>Vilnius</item>
+        <item>Toyama</item>
+        <item>Kazan</item>
+        <item>Marseille</item>
+        <item>Nantes</item>
+        <item>Besancon</item>
+    </string-array>
+
+    <string name="menu_open">Ouvrir Menu</string>
+    <string name="menu_close">Fermer Menu</string>
+</resources>

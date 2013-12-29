@@ -443,7 +443,8 @@ public class MapsActivity extends ActionBarActivity implements BikeMapListener,
                                mStation.getPosition().latitude,
                                mStation.getPosition().longitude,
                                aDistance);
-      mDistance.setText((int)(aDistance[0]) + " mètres");
+      mDistance.setText(String.valueOf((int)(aDistance[0])) + " " +
+          getResources().getText(R.string.map_meters));
     }
 
     // Address
@@ -658,7 +659,7 @@ public class MapsActivity extends ActionBarActivity implements BikeMapListener,
       case MENU_HELP: 
         showHelpDialog();
         hideMenu();
-      break;
+        return true;
     }
 
     return false;

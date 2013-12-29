@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">Veliby</string>
+
+    <string name="ok">Vale!</string>
+
+    <string name="playservice_issue_title">Problema!</string>
+    <string name="playservice_issue_content">Parece que tienes un problema con los "Servicios de Google Play". El mapa no se cargará, pero la pantalla siguiente te invitará a ir en Google Play para actualizar "Google Play Services".</string>
+
+    <string name="welcome_title">Bienvenido a Veliby!</string>
+    <string name="welcome_introduction">Veliby es una aplicación sencilla y concisa que te enseña el estado de las estaciones de biciletas alrededor de ti usando un código de colors sencillo:</string>
+    <string name="welcome_plenty">5 bicis/soportes de bici, vete!</string>
+    <string name="welcome_some">3&#8211;4 bicis/soportes de bici, cuidado!</string>
+    <string name="welcome_few">1&#8211;2 bicis/soportes de bici, no recomendado&#8230;</string>
+    <string name="welcome_none">No bicis/soportes de bici :(</string>
+    <string name="welcome_closed">Estación cerrada</string>
+    <string name="welcome_faved">Estación haciendo parte de tus favoritos. Usa un widget para ver la lista.</string>
+    <string name="welcome_unfaved">Estación que no hace parte de tus favoritos.</string>
+
+    <string name="welcome_controls">No dudes en seleccionar una estación para obtener más informaciones!
+        
+2 botones te permiten controlar la app:</string>
+    <string name="welcome_refresh">Actualiza los datos. La actualización se hace también automáticamente cada vez que se abre/carga la app.</string>
+    <string name="welcome_mode_find">Los colores indican el número de bicis. Pincha para enseñar el número de soportes.</string>
+    <string name="welcome_mode_return">Los colores indican el número de soportes. Pincha para enseñar el número de bicis.</string>
+    <string name="welcome_choosecity">Elige una ciudad en el menu a la izquierda.</string>
+
+    <string name="action_mode">Modo</string>
+    <string name="action_mode_find">Bicis disponibles</string>
+    <string name="action_mode_return">Soportes de bicis disponibles</string>
+
+    <string name="action_reload">Actualizar</string>
+    <string name="action_reload_start">Actualización empezada</string>
+    <string name="action_reload_datarecent">Datos ya actualizados</string>
+    <string name="action_reload_complete">Actualización completa</string>
+    <string name="action_reload_failure">Actualización fallada: por favor verifica tu conexión al Internet</string>
+    
+    <string name="action_faved">Estación ahora favorita, encuentrala en un widget</string>
+    <string name="action_unfaved">Estación quitada de la lista de favoritas</string>
+
+    <string name="welcome_ok">Entendido!</string>
+
+    <string name="refresh">Actualizar</string>
+    <string name="refresh_date">Nunca actualizado</string>
+    
+    <string name="infoview_bonus">Bonus de 15 minutos añadido a tu cuenta
+        cuando entregas tu bici en esta estación!</string>
+    <string name="infoview_bank">Estación que te permite comprar/recargar abonos.</string>
+    <string name="infoview_stationclosed">Estación cerrada!</string>
+    <string name="infoview_noinfo">Información indisponible</string>
+    <string name="infoview_favorite">Estación favorita</string>
+    
+    <string name="widget_stationclosed">Cerrada</string>
+    <string name="widget_nofavstation">Ninguna estación favorita, añadelas en Veliby</string>
+
+    <string-array name="color_mode_array">
+        <item>Encontrar una bici</item>
+        <item>Entregar una bici</item>
+    </string-array>
+
+    <string name="map_nofav">Ninguna estación favorita, añade una para activar este modo. Elige una estación y pincha la estrella.</string>
+    <string name="map_directionsfailed">Imposible obtener una ruta.</string>
+    <string name="map_nodistance">Distancía indisponible</string>
+    <string name="map_meters">metros</string>
+
+    <string name="map_stationinfo_getdirections">Obtener ruta</string>
+    <string name="map_stationinfo_toggle">Enseñar/Esconder informaciones adicionales</string>
+
+    <string-array name="menu_left_items">
+        <item>Ayuda</item>
+        <item></item>
+        <item>menu_left_modes:force_expand:one_selection:Modos</item>
+        <item></item>
+        <item>menu_left_cities:normal:one_selection:Ciudades</item>
+    </string-array>
+
+    <string-array name="menu_left_modes">
+        <item>Todas las estaciones</item>
+        <item>Estaciones favoritas</item>
+    </string-array>
+
+    <string-array name="menu_left_cities">
+        <item>París</item>
+        <item>Rouen</item>
+        <item>Toulouse</item>
+        <item>Luxembourg</item>
+        <item>Valencia</item>
+        <item>Stockholm</item>
+        <item>Goteborg</item>
+        <item>Santander</item>
+        <item>Amiens</item>
+        <item>Lillestrom</item>
+        <item>Mulhouse</item>
+        <item>Lyon</item>
+        <item>Ljubljana</item>
+        <item>Sevilla</item>
+        <item>Namur</item>
+        <item>Nancy</item>
+        <item>Creteil</item>
+        <item>Brusela-Ciudad</item>
+        <item>Cergy-Pontoise</item>
+        <item>Vilnius</item>
+        <item>Toyama</item>
+        <item>Kazan</item>
+        <item>Marsella</item>
+        <item>Nantes</item>
+        <item>Besancon</item>
+    </string-array>
+
+    <string name="menu_open">Abrir Menu</string>
+    <string name="menu_close">Cerrar Menu</string>
+</resources>
