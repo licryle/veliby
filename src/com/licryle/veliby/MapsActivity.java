@@ -1,10 +1,12 @@
 package com.licryle.veliby;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.Map;
 
-import org.apache.http.MethodNotSupportedException;
-
-import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.DialogInterface.OnClickListener;
 import android.content.DialogInterface;
@@ -26,8 +28,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
-import android.widget.AdapterView;
-import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ExpandableListView;
 import android.widget.ExpandableListView.OnChildClickListener;
 import android.widget.ExpandableListView.OnGroupClickListener;
@@ -41,8 +41,9 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.licryle.veliby.BikeMap.BikeMap;
 import com.licryle.veliby.BikeMap.BikeMapListener;
+import com.licryle.veliby.BikeMap.Contract;
 import com.licryle.veliby.BikeMap.Station;
-import com.licryle.veliby.BikeMap.Station.Contract;
+import com.licryle.veliby.BikeMap.Contracts;
 import com.licryle.veliby.BikeMap.Stations;
 import com.licryle.veliby.UI.ExpandableDrawerAdapter;
 import com.licryle.veliby.UI.ExpandableDrawerAdapter.ExpandNode;
@@ -83,12 +84,11 @@ public class MapsActivity extends ActionBarActivity implements BikeMapListener,
     _mSettings = Settings.getInstance(this);
     _mSwipeDetector = new SwipeTouchDectector(getApplicationContext(), 100, 100);
     _mSwipeDetector.addListener(this);
-    _updateAppTitle();
 
     // Start - Create Control Views
-    createMenu();
+    _createMenu();
 
-    firstStart();
+    _firstStart();
 
     _mStationInfo = findViewById(R.id.map_stationinfo);
     _mStationInfo.findViewById(R.id.infoview_favorite).setOnClickListener(this);
@@ -104,7 +104,7 @@ public class MapsActivity extends ActionBarActivity implements BikeMapListener,
     _mInfoView = getLayoutInflater().inflate(R.layout.map_infoview, null);
     // End - Create Control Views
 
-    File mAppDir = _mSettings.getVelibyPath();
+    File mAppDir = Settings.getVelibyPath();
     mAppDir.mkdirs();
 
     GoogleMap mMap = ((SupportMapFragment) this.getSupportFragmentManager().
@@ -117,6 +117,8 @@ public class MapsActivity extends ActionBarActivity implements BikeMapListener,
       alertBox(getResources().getString(R.string.playservice_issue_title),
           getResources().getString(R.string.playservice_issue_content), null);
     }
+
+    _updateAppTitle();
   }
 
   @Override
@@ -188,7 +190,7 @@ public class MapsActivity extends ActionBarActivity implements BikeMapListener,
   }
 
   //************************** LeftMenu Controls ***************************//
-  public void createMenu() {
+  protected void _createMenu() {
     _mMenu = (DrawerLayout) findViewById(R.id.drawer_layout);
     _mMenuList = (ExpandableListView) findViewById(R.id.mapsactivity_menu);
 
@@ -216,8 +218,49 @@ public class MapsActivity extends ActionBarActivity implements BikeMapListener,
     _mMenuList.expandGroup(MENU_MODES); // Modes menu always expanded
     _mMenuAdapter.getChild(MENU_MODES, _mSettings.isFavStationsOnly() ? 1 : 0).
         setSelected(true);
-    _mMenuAdapter.getChild(MENU_CITY, 
-        _mSettings.getCurrentContract().getId() - 1).setSelected(true);
+  }
+
+  protected void _updateMenu(Contracts mContracts) {
+    ExpandNode[] mCities = new ExpandNode[mContracts.size()];
+
+    Iterator<Map.Entry<Integer, Contract>> it = mContracts.entrySet().
+        iterator();
+
+    int iCurrContractId = _mSettings.getCurrentContractId();
+    int iCurrContractPos = 0;
+    int i = 0;
+    while (it.hasNext()) {
+      Map.Entry<Integer, Contract> entry = it.next();
+      Contract mContract = entry.getValue();
+
+      if (iCurrContractId == mContract.getId()) iCurrContractPos = i;
+      mCities[i] = _mMenuAdapter.new ExpandNode(mContract.getCity(),
+          new ExpandNode[0], false, 0, mContract);
+      i++;
+    }
+
+    Arrays.sort(mCities, new Comparator<ExpandNode>() {
+      @Override
+      public int compare(ExpandNode lhs, ExpandNode rhs) {
+        return ((Contract) lhs.getLinkedObject()).getCity().
+            compareToIgnoreCase(((Contract) rhs.getLinkedObject()).getCity());
+      }
+    });
+
+    _mMenuAdapter.getGroup(MENU_CITY).setChildren(mCities);
+    _mMenuAdapter.getChild(MENU_CITY, iCurrContractPos).setSelected(true);
+  }
+
+  protected void _updateAppTitle() {
+    Contract mContract = _mBikeMap.getContracts().findContractById(
+        _mSettings.getCurrentContractId());
+
+    String sAppName = getResources().getString(R.string.app_name);
+    if (mContract != null) {
+      setTitle(sAppName + " - " + mContract.getCity());
+    } else {
+      setTitle(sAppName);
+    }
   }
 
   //********************** OnClickListener Interface ***********************//
@@ -270,7 +313,7 @@ public class MapsActivity extends ActionBarActivity implements BikeMapListener,
     startActivity(intent);
   }
  
-  protected void firstStart() {
+  protected void _firstStart() {
     if (_mSettings.isFirstStart()) {
       showHelpDialog();
 
@@ -390,14 +433,14 @@ public class MapsActivity extends ActionBarActivity implements BikeMapListener,
     Log.i("MapsActivity", "Entered downloadMarkers()");
     if (_mBikeMap.isDownloading()) { return; }
  
-    Stations mStations = _mBikeMap.stations();
+    Stations mStations = _mBikeMap.getStations();
     if (mStations == null ||
-        mStations.isStaticExpired(_mSettings.getStaticDeadLine())) {
+        mStations.isStaticExpired(Settings.getStaticDeadLine())) {
       lightMessage(R.string.action_reload_start, true);
       _mBikeMap.downloadMarkers();
     } else {
       if (bManual ||
-          mStations.isDynamicExpired(_mSettings.getDynamicDeadLine())) {
+          mStations.isDynamicExpired(Settings.getDynamicDeadLine())) {
         lightMessage(R.string.action_reload_start, true);
         _mBikeMap.downloadMarkers();
       }
@@ -413,6 +456,7 @@ public class MapsActivity extends ActionBarActivity implements BikeMapListener,
   @Override
   public void onDownloadSuccess(BikeMap mBikeMap) {
     hideStationInfo();
+    _updateMenu(mBikeMap.getContracts());
     lightMessage(R.string.action_reload_complete, false);
   }
 
@@ -608,17 +652,18 @@ public class MapsActivity extends ActionBarActivity implements BikeMapListener,
         break;
       }
     } else if (groupPosition == MENU_CITY) {
-      int iNewContract = childPosition + 1;
-      if (iNewContract != _mSettings.getCurrentContract().getId()) {
-        Contract mContract = Contract.findContractById(childPosition + 1);
+      Contract mContract = (Contract) _mMenuAdapter.
+          getChild(MENU_CITY, childPosition).getLinkedObject();
+
+      if (mContract.getId() != _mSettings.getCurrentContractId()) {
         _mSettings.setCurrentContract(mContract);
         _updateAppTitle();
         _mBikeMap.moveCameraTo(mContract.getPosition(), 13);
         lightMessage(R.string.action_reload_start, true);
         _mBikeMap.downloadMarkers();
       } else {
-        _mBikeMap.moveCameraTo(
-            _mSettings.getCurrentContract().getPosition(),13);
+        _mBikeMap.moveCameraTo(_mBikeMap.getContracts().findContractById(
+            _mSettings.getCurrentContractId()).getPosition(),13);
       }
 
       hideMenu();
@@ -643,12 +688,6 @@ public class MapsActivity extends ActionBarActivity implements BikeMapListener,
 
     _mMenuAdapter.notifyDataSetChanged();
     return false;
-  }
-
-  private void _updateAppTitle() {
-    Contract mContract = _mSettings.getCurrentContract();
-    String sAppName = getResources().getString(R.string.app_name);
-    setTitle(sAppName + " - " + mContract.getName());
   }
 
   @Override

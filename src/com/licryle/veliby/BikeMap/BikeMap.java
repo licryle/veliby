@@ -46,6 +46,7 @@ public class BikeMap implements OnMarkerClickListener, OnMapClickListener,
 
   protected ArrayList<BikeMapListener> _aListeners;
   protected Stations _mStations = null;
+  protected Contracts _mContracts = new Contracts();
   protected Settings _mSettings = null;
 
   protected Polyline _mCurrentDirections = null;
@@ -75,7 +76,8 @@ public class BikeMap implements OnMarkerClickListener, OnMapClickListener,
 
   public boolean isDownloading() { return _bDownloading; }
   public boolean isFindBikeMode() { return _bModeFindBike; }
-  public Stations stations() { return _mStations; }
+  public Stations getStations() { return _mStations; }
+  public Contracts getContracts() { return _mContracts; }
 
   public void changeBikeMode(boolean bFindBike) {
     _bModeFindBike = bFindBike;
@@ -93,19 +95,31 @@ public class BikeMap implements OnMarkerClickListener, OnMapClickListener,
     intent.putExtra("receiver",
         (Parcelable) new DownloadStationsReceiver(new Handler()));
     intent.putExtra("requestor", this.toString());
-    intent.putExtra("url_full",
-        mSettings.getURLDownloadFull(mSettings.getCurrentContract()));
-    intent.putExtra("url_dynamic",
-        mSettings.getURLDownloadDynamic(mSettings.getCurrentContract()));
-    intent.putExtra("dl_static", mSettings.getStaticDeadLine());
-    intent.putExtra("dl_dynamic", mSettings.getDynamicDeadLine());
-    intent.putExtra("contract_id", mSettings.getCurrentContract().getId());
+    intent.putExtra("dl_static", Settings.getStaticDeadLine());
+    intent.putExtra("dl_dynamic", Settings.getDynamicDeadLine());
     intent.putExtra("stations_file",
-        mSettings.getStationsFile().getAbsolutePath());
+        Settings.getStationsFile().getAbsolutePath());
+
+    intent.putExtra("dl_contracts", Settings.getContractsDeadLine());
+    intent.putExtra("contract_id", mSettings.getCurrentContractId());
+    intent.putExtra("contracts_url", Settings.getURLContracts());
+    intent.putExtra("contracts_file",
+        Settings.getContractsFile().getAbsolutePath());
 
     Log.i("BikeMap", "Starting Intent in downloadMarkers()");
     _mContext.startService(intent);
     return true;
+  }
+
+  public void moveCameraOnContract() {
+    if (Util.getLastPosition(_mContext) == null) {
+      Contract mContract = _mContracts.findContractById(
+          _mSettings.getCurrentContractId());
+
+      if (mContract != null) {
+        moveCameraTo(mContract.getPosition(), 13);
+      }
+    }    
   }
 
   public void moveCameraTo(LatLng mPosition, int iZoom) {
@@ -168,7 +182,7 @@ public class BikeMap implements OnMarkerClickListener, OnMapClickListener,
     _mMap.setOnMarkerClickListener(this);
     _mMap.setOnMapClickListener(this);
 
-    moveCameraTo(Util.getLastPosition(_mContext), 16);
+    moveCameraTo(Util.getLastPosition(_mContext), 13);
 
     return true;
   }
@@ -254,9 +268,22 @@ public class BikeMap implements OnMarkerClickListener, OnMapClickListener,
           Log.i("BikeMap", "onReceiveResult() SUCCESS");
           // date doesn't matter since it was just generated
           _mStations = (Stations) resultData.getSerializable("stations");
+          _mContracts = (Contracts) resultData.getSerializable("contracts");
   
+          moveCameraOnContract();
+
           updateMarkers();
           dispatchOnDownloadSuccess();
+          _bDownloading = false;
+        break;
+
+        case StationsInfoService.CONTRACT_ONLY:
+          Log.i("BikeMap", "onReceiveResult() CONTRACT_ONLY");
+          // date doesn't matter since it was just generated
+          _mContracts = (Contracts) resultData.getSerializable("contracts");
+
+          moveCameraOnContract();
+
           _bDownloading = false;
         break;
 

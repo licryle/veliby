@@ -51,15 +51,14 @@ public class Provider extends AppWidgetProvider {
     Log.i("Provider", "Entering onEnabled()");
     _mContext = context;
 
-    Settings mSettings = Settings.getInstance(context);
-    File mAppDir = mSettings.getVelibyPath();
+    File mAppDir = Settings.getVelibyPath();
     mAppDir.mkdirs();
 
     AlarmManager alarmManager = (AlarmManager) context.getSystemService(
         Context.ALARM_SERVICE);
     alarmManager.setRepeating(AlarmManager.RTC,
         System.currentTimeMillis() + 1000,
-        Settings.getInstance(context).getWidgetUpdateFrequency() * 60000,
+        Settings.getWidgetUpdateFrequency() * 60000,
         _createDataUpdateIntent(context));
   }
 
@@ -212,15 +211,14 @@ public class Provider extends AppWidgetProvider {
     intent.putExtra("receiver",
         (Parcelable) new DownloadStationsReceiver(new Handler()));
     intent.putExtra("requestor", this.toString());
-    intent.putExtra("url_full",
-        mSettings.getURLDownloadFull(mSettings.getCurrentContract()));
-    intent.putExtra("url_dynamic",
-        mSettings.getURLDownloadDynamic(mSettings.getCurrentContract()));
-    intent.putExtra("dl_static", mSettings.getStaticDeadLine());
-    intent.putExtra("dl_dynamic", mSettings.getDynamicDeadLine());
-    intent.putExtra("contract_id", mSettings.getCurrentContract().getId());
+    intent.putExtra("dl_static", Settings.getStaticDeadLine());
+    intent.putExtra("dl_dynamic", Settings.getDynamicDeadLine());
     intent.putExtra("stations_file",
-        mSettings.getStationsFile().getAbsolutePath());
+        Settings.getStationsFile().getAbsolutePath());
+    intent.putExtra("contract_id", mSettings.getCurrentContractId());
+    intent.putExtra("contracts_url", Settings.getURLContracts());
+    intent.putExtra("contracts_file",
+        Settings.getContractsFile().getAbsolutePath());
 
     return intent;
   }

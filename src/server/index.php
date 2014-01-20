@@ -1,88 +1,59 @@
 <?php
 
-error_reporting(0);
+error_reporting(E_ALL);
 
 define('PATH_BASE', dirname(__FILE__) . '/');
 define('PATH_TMP', PATH_BASE . 'tmp/');
 define('PATH_OBJECTS', PATH_BASE . 'objects/');
+define('PATH_PROVIDERS', PATH_BASE . 'dataproviders/');
 
-require_once(PATH_OBJECTS . 'class.DynamicStation.php');
+require_once(PATH_OBJECTS . 'class.FileUtils.php');
+require_once(PATH_OBJECTS . 'class.Contracts.php');
 
-$sUrl = "https://api.jcdecaux.com/vls/v1/stations?" .
-  			"contract=Paris&apiKey=718b4e0e0b1f01af842ff54c38bed00eaa63ce3c";
 
-$sFilePath = PATH_TMP . 'stations';
-$iDataTimeout = 120; // seconds
+$sFilePath_Stations = PATH_TMP . 'stations';
+$iDataTimeout_Stations = 120; // seconds
 
-$iContract = intval($_GET['c']);
+$sFilePath_Contracts = PATH_TMP . 'contracts';
+$sUrl_Contracts = "http://api.citybik.es/networks.json";
+$iDataTimeout_Contracts = 36000; // seconds
 
-if (!isset(Station::$aContracts[$iContract])) {
+$mContracts = new Contracts();
+$iContract = intval(@$_GET['c']);
+if (! $iContract) {
+  die(json_encode($mContracts->getArray()));
+}
+
+$mContract = $mContracts->getContractById($iContract);
+if (!$mContract) {
   // Quit if not a valid contract
-  die('BAD_CONTRACT');
+  die('CONTRACT_BAD_OR_CANNOT_LOAD');
 }
 
-function isBeingWritten($sFilePath) {
-  $mFile = fopen($sFilePath, 'r');
-  $bLock = flock($mFile, LOCK_EX | LOCK_NB);
-
-  flock($mFile, LOCK_UN);
-  fclose($mFile);
-
-  return $mFile && !$bLock;
+$bFull = boolval(@$_GET['f']);
+if (!$mContract->updateDynamicStations($sFilePath_Stations,
+    $iDataTimeout_Stations)) {
+  // Quit if we can't update stations for some reason
+  die('STATIONS_CANNOT_UPDATE');
 }
 
-function openLockedFileTimeOut($sFilePath, $sMode, $iTimeOut, $bRead) {
-  $iTime = 0;
-  while ($iTime < $iTimeOut && isBeingWritten($sFilePath)) {
-    $iTime += 100;
-    usleep(100);
-  }
-
-  $mFile = fopen($sFilePath, $sMode);
-  if (!$mFile) return false;
-
-  $iLock = $bRead ? LOCK_SH : LOCK_EX;
-  $bLock = flock($mFile, $iLock | LOCK_NB);
-  if (!$bLock) return false;
-
-  return $mFile;
+$sFilePath = $mContract->buildStationsFilePath($sFilePath_Stations, $bFull);
+$mFile = FileUtils::openLockedFileTimeOut($sFilePath, 'rb', 500, true);
+if (!$mFile) {
+  // Quit if not a valid contract
+  die('STATIONS_CANNOT_LOAD_FILE');
 }
-
-$sFilePath .= '_' . $iContract;
-if (!file_exists($sFilePath) ||
-    (filemtime($sFilePath) +  $iDataTimeout) < time()) {
-  // If data not cached or outdated
-  if (!isBeingWritten($sFilePath)) {
-    // Not being written, take the stab at writing it
-    $mFile = openLockedFileTimeOut($sFilePath, 'wb', 500, false);
-    flock($mFile, LOCK_EX);
-
-    $sStations = file_get_contents($sUrl);
-    $aStations = json_decode($sStations, true);
-    foreach ($aStations as $key => $aStation) {
-      $mStation = new DynamicStation($aStation);
-
-      fwrite($mFile, $mStation->getMinimizedDynamic());
-    }
-
-    fflush($mFile);            // flush output before releasing the lock
-    touch($mFile);
-    flock($mFile, LOCK_UN);    // release the lock
-  }
-}
-
-
-// Now file is written or being written for sure
-$mFile = openLockedFileTimeOut($sFilePath, 'rb', 500, true);
-if (!$mFile) die('CANNOT_READ');
 
 $iFileSize = filesize($sFilePath);
-header('Content-Type: binary/octet-stream');
-header('Content-Length: ' . $iFileSize);
+
+if (!$bFull) {
+  header('Content-Type: binary/octet-stream');
+  header('Content-Length: ' . $iFileSize);
+}
 
 echo fread($mFile, $iFileSize);
 
-fclose($mFile);
 flock($mFile, LOCK_UN);
+fclose($mFile);
 
 ?>

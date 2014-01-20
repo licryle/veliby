@@ -81,31 +81,6 @@
     </string-array>
 
     <string-array name="menu_left_cities">
-        <item>París</item>
-        <item>Rouen</item>
-        <item>Toulouse</item>
-        <item>Luxembourg</item>
-        <item>Valencia</item>
-        <item>Stockholm</item>
-        <item>Goteborg</item>
-        <item>Santander</item>
-        <item>Amiens</item>
-        <item>Lillestrom</item>
-        <item>Mulhouse</item>
-        <item>Lyon</item>
-        <item>Ljubljana</item>
-        <item>Sevilla</item>
-        <item>Namur</item>
-        <item>Nancy</item>
-        <item>Creteil</item>
-        <item>Brusela-Ciudad</item>
-        <item>Cergy-Pontoise</item>
-        <item>Vilnius</item>
-        <item>Toyama</item>
-        <item>Kazan</item>
-        <item>Marsella</item>
-        <item>Nantes</item>
-        <item>Besancon</item>
     </string-array>
 
     <string name="menu_open">Abrir Menu</string>

@@ -7,7 +7,7 @@ import java.util.Hashtable;
 import java.util.Map;
 
 import com.google.android.gms.maps.model.PolylineOptions;
-import com.licryle.veliby.BikeMap.Station.Contract;
+import com.licryle.veliby.BikeMap.Contract;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -23,13 +23,15 @@ public class Settings implements Serializable {
   protected Context _mContext;
   protected SharedPreferences _mPrefs;
 
-  protected int _iStaticDeadline = 7;
-  protected int _iDyanmicDeadline = 3;
-  protected int _iWidgetUpdateFrequency = 10;
+  protected final static int _iStaticDeadline = 7;
+  protected final static int _iDynamicDeadline = 3;
+  protected final static int _iContractsDeadline = 10;
+  protected final static int _iWidgetUpdateFrequency = 10;
 
-  protected final String URL_FULL = "https://api.jcdecaux.com/vls/v1/stations" +
-      "?contract=%s&apiKey=718b4e0e0b1f01af842ff54c38bed00eaa63ce3c";
-  protected final String URL_DYNAMIC = "http://veliby.berliat.fr/?c=%d";
+  protected final static String URL_CONTRACTS =
+      "http://api.citybik.es/networks.json";
+  protected final static String URL_DYNAMIC =
+      "http://veliby.berliat.fr/v2/?c=%d";
 
   protected final static Hashtable<Integer, Integer> _mBikeResources = 
   new Hashtable<Integer, Integer>() {
@@ -104,20 +106,24 @@ catch (NameNotFoundException e) {}*/
     return aResults;
   }
 
-  public int getStaticDeadLine() {
+  public static int getStaticDeadLine() {
     return _iStaticDeadline;
   }
 
-  public int getDynamicDeadLine() {
-    return _iDyanmicDeadline;
+  public static int getDynamicDeadLine() {
+    return _iDynamicDeadline;
   }
 
-  public int getWidgetUpdateFrequency() {
+  public static int getContractsDeadLine() {
+    return _iContractsDeadline;
+  }
+
+  public static int getWidgetUpdateFrequency() {
     return _iWidgetUpdateFrequency;
   }
 
-  public Contract getCurrentContract() {
-    return Contract.findContractById(_mPrefs.getInt("current_contract", 1));    
+  public int getCurrentContractId() {
+    return _mPrefs.getInt("current_contract", 1);    
   }
 
   public void setCurrentContract(Contract mContract) {
@@ -125,21 +131,29 @@ catch (NameNotFoundException e) {}*/
   }
 
   @SuppressLint("DefaultLocale")
-  public String getURLDownloadDynamic(Contract mContract) {
+  public static String getURLDownloadDynamic(Contract mContract) {
     return String.format(URL_DYNAMIC, mContract.getId());
   }
 
-  public String getURLDownloadFull(Contract mContract) {
-    return String.format(URL_FULL, mContract.getName());
+  public static String getURLDownloadFull(Contract mContract) {
+    return mContract.getUrl();
   }
 
-  public File getVelibyPath() {
+  public static String getURLContracts() {
+    return URL_CONTRACTS;
+  }
+
+  public static File getVelibyPath() {
     return new File(Environment.getExternalStorageDirectory().getPath() +
         "/Veliby/");
   }
 
-  public File getStationsFile() {
+  public static File getStationsFile() {
     return new File(getVelibyPath().getAbsolutePath() + "/stations.comlete");
+  }
+
+  public static File getContractsFile() {
+    return new File(getVelibyPath().getAbsolutePath() + "/contracts");
   }
 
   public boolean isFavStationsOnly() {

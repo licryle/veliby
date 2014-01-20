@@ -12,72 +12,10 @@ import com.google.android.gms.maps.model.LatLng;
 public class Station implements Serializable {
   private static final long serialVersionUID = -967068502674805726L;
 
-	public enum Contract {
-    PARIS       (1, "Paris",                48.85568,   2.346246),
-    ROUEN       (2, "Rouen",                49.443232,  1.099971),
-    TOULOUSE    (3, "Toulouse",             43.604652,  1.444209),
-    LUXEMBOURG  (4, "Luxembourg",           49.611621,  6.1319346),
-    VALENCE     (5, "Valence",              39.4699075, -0.3762881),
-    STOCKHOLM   (6, "Stockholm",            59.32893,   18.06491),
-    GOTEBORG    (7, "Goteborg",             57.70887,   11.97456),
-    SANTANDER   (8, "Santander",            43.4623057, -3.8099803),
-    AMIENS      (9, "Amiens",               49.894067,  2.295753),
-    LILLESTROM  (10, "Lillestrom",          59.9559696, 11.0503785),
-    MULHOUSE    (11, "Mulhouse",            47.750839,  7.335888),
-    LYON        (12, "Lyon",                45.764043,  4.835659),
-    LJUBLJANA   (13, "Ljubljana",           46.0564509, 14.5080702),
-    SEVILLE     (14, "Seville",             37.3880961, -5.9823299),
-    NAMUR       (15, "Namur",               50.4673883, 4.8719854),
-    NANCY       (16, "Nancy",               48.692054,  6.184417),
-    CRETEIL     (17, "Creteil",             48.790367,  2.455572),
-    BRUXELLES   (18, "Bruxelles-Capitale",  50.8503463, 4.3517211),
-    CERGY       (19, "Cergy-Pontoise",      49.038946,  2.075368),
-    VILNIUS     (20, "Vilnius",             54.6871555, 25.2796514),
-    TOYANA      (21, "Toyama",              36.6959518, 137.2136768),
-    KAZAN       (22, "Kazan",               55.8005556, 49.1055556),
-    MARSEILLE   (23, "Marseille",           43.296482,  5.36978),
-    NANTES      (24, "Nantes",              47.218371, -1.553621),
-    BESANCON    (25, "Besancon",            47.237829,  6.0240539);
-
-		private final int _iId;
-		private final String _sName;
-		private final LatLng _Position;
-
-		Contract(int iId, String sName, double dLat, double dLng) {
-			this._iId = iId;
-			this._sName = sName;
-			this._Position = new LatLng(dLat, dLng);
-		}
-
-		public int getId() { return _iId; }
-    public String getName() { return _sName; }
-    public LatLng getPosition() { return _Position; }
-
-		public static Contract findContractByName(String sName) {
-			for (Contract c: Contract.values()) {
-				if (c.getName().equalsIgnoreCase(sName) ) {
-					return c;
-				}
-			}
-
-			return null;
-		}
-
-		public static Contract findContractById(int iId) {
-			for (Contract c: Contract.values()) {
-				if (c.getId() == iId) {
-					return c;
-				}
-			}
-
-			return null;
-    }
-	}
-
 	// Static data
 	protected int _iNumber;
-	protected Contract _iContract;
 	protected int _iId;
+	protected Contract _mContract;
 
 	protected String _sName;
 	protected String _sAddress;
@@ -96,25 +34,25 @@ public class Station implements Serializable {
   protected boolean _bShallow;
   protected boolean _bStaticOnly;
 
-	public Station(JSONObject mStation) throws JSONException {
-		_iNumber = mStation.getInt("number");
-		_iContract = Contract.findContractByName(mStation.getString("contract_name"));
-		_iId = _iContract.getId() * 1000000 + _iNumber;
+	public Station(Contract mContract, JSONObject mStation)
+	    throws JSONException {
+    _mContract = mContract;
+		_iNumber = mStation.getInt("id");
+		_iId = _mContract.getId() * 1000 + _iNumber;
 
 		_sName = mStation.getString("name");
-		_sAddress = mStation.getString("address");
+		_sAddress = ""; //mStation.getString("address");
 
-		JSONObject mPos = mStation.getJSONObject("position");
-		_dLat = mPos.getDouble("lat");
-		_dLng = mPos.getDouble("lng");
+		_dLat = mStation.getDouble("lat") / 1E6;
+		_dLng = mStation.getDouble("lng") / 1E6;
 
-		_bBanking = mStation.getBoolean("banking");
-		_bBonus = mStation.getBoolean("bonus");
-		_iBikeStands = mStation.getInt("bike_stands");
+		_bBanking = false; // mStation.getBoolean("banking");
+		_bBonus = false; //mStation.getBoolean("bonus");
+		_iBikeStands = -1;//mStation.getInt("bike_stands");
 
-		_bOpened = mStation.getString("status").equalsIgnoreCase("OPEN");
-		_iAvBikes = mStation.getInt("available_bikes");
-		_iAvBikeStands = mStation.getInt("available_bike_stands");
+		_iAvBikes = mStation.getInt("bikes");
+		_iAvBikeStands = mStation.getInt("free");
+    _bOpened = (_iAvBikes > 0) || (_iAvBikeStands > 0);
 
 		_bShallow = false;
 		_bStaticOnly = false;
@@ -125,7 +63,7 @@ public class Station implements Serializable {
 		_bStaticOnly = mOriginal.isStaticOnly();
 
 		_iNumber = mOriginal.getNumber();
-		_iContract = mOriginal.getContract();
+		_mContract = mOriginal.getContract();
 		_iId = mOriginal.getId();
 
 		_bOpened = mOriginal.isOpened();
@@ -145,10 +83,10 @@ public class Station implements Serializable {
 		}
 	}
 
-	public Station(int iId, int iAvBikes, int iAvBikeStands, boolean bOpened) {
+	/*public Station(int iId, int iAvBikes, int iAvBikeStands, boolean bOpened) {
 		_iId = iId;
-		_iContract = Contract.findContractById(iId / 1000000);
-		_iNumber = iId - _iContract.getId() * 1000000;
+		_mContract = Contracts.findContractById(iId / 1000000);
+		_iNumber = iId - _mContract.getId() * 1000000;
 
 		_bOpened = bOpened;
 		_iAvBikes = iAvBikes;
@@ -156,10 +94,10 @@ public class Station implements Serializable {
 
 		_bShallow = true;
 		_bStaticOnly = false;
-	}
+	}*/
 
 	public int getNumber() { return _iNumber; }
-	public Contract getContract() { return _iContract; }
+	public Contract getContract() { return _mContract; }
 	public int getId() { return _iId; }
 	public String getName() { return _sName; }
 	public String getFriendlyName() {

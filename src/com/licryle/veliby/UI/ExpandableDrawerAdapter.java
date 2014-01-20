@@ -12,9 +12,9 @@ import android.widget.BaseExpandableListAdapter;
 import android.widget.TextView;
 
 public class ExpandableDrawerAdapter extends BaseExpandableListAdapter {
-  protected LayoutInflater mInflater;
-  protected Activity mContext;
-  protected ExpandNode[] aNavItems;
+  protected LayoutInflater _mInflater;
+  protected Activity _mContext;
+  protected ExpandNode[] _aNavItems;
 
   public class ExpandNode {
     protected String _sName;
@@ -22,6 +22,7 @@ public class ExpandableDrawerAdapter extends BaseExpandableListAdapter {
     protected boolean _bSelected;
     protected boolean _bForceExpand;
     protected int _iSelectMode;
+    protected Object _mLinkedObj;
 
     public ExpandNode() {
       this._sName = "";
@@ -29,27 +30,31 @@ public class ExpandableDrawerAdapter extends BaseExpandableListAdapter {
       this._bForceExpand = false;
       this._bSelected = false;
       this._iSelectMode = 0;
+      this._mLinkedObj = null;
     }
 
-    public ExpandNode(String sName, ExpandNode[] children, boolean bForceExpand,
-        int iSelectMode) {
+    public ExpandNode(String sName, ExpandNode[] children,
+        boolean bForceExpand, int iSelectMode, Object oLinkedObject) {
       this._sName = sName;
       this._aChildren = children;
       this._bForceExpand = bForceExpand;
       this._bSelected = false;
       this._iSelectMode = iSelectMode;
+      this._mLinkedObj = oLinkedObject;
     }
 
     public String Name() { return _sName; }
     public ExpandNode[] Children() { return _aChildren; }
+    public void setChildren(ExpandNode[] aChildren) { _aChildren = aChildren; }
     public boolean ForceExpand() { return _bForceExpand; }
     public boolean isSelected() { return _bSelected; }
     public void setSelected(boolean bSelected) { _bSelected = bSelected; }
     public int getSelectedMode() { return _iSelectMode; }
+    public Object getLinkedObject() { return _mLinkedObj; }
   }
 
-  protected ExpandNode[] loadNode(int iResId) {
-    String[] aItems = mContext.getResources().getStringArray(iResId);
+  protected ExpandNode[] _loadNode(int iResId) {
+    String[] aItems = _mContext.getResources().getStringArray(iResId);
     ExpandNode[] aReturnItems = new ExpandNode[aItems.length];
 
     for (int i = 0; i < aItems.length; i++) {
@@ -60,16 +65,16 @@ public class ExpandableDrawerAdapter extends BaseExpandableListAdapter {
 
         if (sItems.length == 1) {
           aReturnItems[i] = new ExpandNode(aItems[i], new ExpandNode[0],
-              false, 0);        
+              false, 0, null);        
         } else {
           int iSelectMode = 0;
           if (sItems[2].equals("one_selection")) { iSelectMode = 1; } else
           if (sItems[2].equals("multi_selection")) { iSelectMode = 2; }
 
-          int iId = mContext.getResources().getIdentifier(sItems[0], "array",
-              mContext.getPackageName());
-          aReturnItems[i] = new ExpandNode(sItems[3], loadNode(iId),
-              sItems[1].equals("force_expand"), iSelectMode);
+          int iId = _mContext.getResources().getIdentifier(sItems[0], "array",
+              _mContext.getPackageName());
+          aReturnItems[i] = new ExpandNode(sItems[3], _loadNode(iId),
+              sItems[1].equals("force_expand"), iSelectMode, null);
         }
       }
     }
@@ -78,15 +83,15 @@ public class ExpandableDrawerAdapter extends BaseExpandableListAdapter {
   }
 
   public ExpandableDrawerAdapter (Activity context) {
-    this.mContext = context;
-    this.mInflater = (LayoutInflater)
+    this._mContext = context;
+    this._mInflater = (LayoutInflater)
         context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 
-    aNavItems = loadNode(R.array.menu_left_items);
+    _aNavItems = _loadNode(R.array.menu_left_items);
   }
 
   public ExpandNode getChild(int groupPosition, int childPosition) {
-    return aNavItems[groupPosition].Children()[childPosition];
+    return _aNavItems[groupPosition].Children()[childPosition];
   }
   
   public long getChildId(int groupPosition, int childPosition) {
@@ -109,27 +114,31 @@ public class ExpandableDrawerAdapter extends BaseExpandableListAdapter {
 
     if (mChild.isSelected()) {
       mTxt.setBackgroundColor(
-          mContext.getResources().getColor(R.color.menu_button_pressed));
+          _mContext.getResources().getColor(R.color.menu_button_pressed));
       mTxt.setTextColor(Color.WHITE);
     } else {
       mTxt.setBackgroundColor(Color.TRANSPARENT);
       mTxt.setTextColor(
-          mContext.getResources().getColor(R.color.veliby_purple_light));          
+          _mContext.getResources().getColor(R.color.veliby_purple_light));          
     }
 
     return convertView;
   }
 
   public int getChildrenCount(int groupPosition) {
-    return aNavItems[groupPosition].Children().length;
+    return _aNavItems[groupPosition].Children().length;
   }
 
   public ExpandNode getGroup(int groupPosition) {
-    return aNavItems[groupPosition];
+    return _aNavItems[groupPosition];
+  }
+
+  public void setGroup(int groupPosition, ExpandNode m) {
+    _aNavItems[groupPosition] = m;
   }
   
   public int getGroupCount() {
-    return aNavItems.length;
+    return _aNavItems.length;
   }
   
   public long getGroupId(int groupPosition) {
@@ -161,19 +170,19 @@ public class ExpandableDrawerAdapter extends BaseExpandableListAdapter {
   }
 
   protected View inflateDivider() {
-    return mContext.getLayoutInflater().inflate(
+    return _mContext.getLayoutInflater().inflate(
         R.layout.activity_maps_menu_divider, null);
   }
 
   protected View inflateItem() {
-    TextView mView = (TextView) mContext.getLayoutInflater().inflate(
+    TextView mView = (TextView) _mContext.getLayoutInflater().inflate(
         R.layout.activity_maps_menu_item, null);
 
     return mView;
   }
 
   protected View inflateGroup() {
-    TextView mView = (TextView) mContext.getLayoutInflater().inflate(
+    TextView mView = (TextView) _mContext.getLayoutInflater().inflate(
         R.layout.activity_maps_menu_group, null);
 
     return mView;

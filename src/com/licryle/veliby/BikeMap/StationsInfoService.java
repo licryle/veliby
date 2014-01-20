@@ -14,6 +14,7 @@ import java.util.Hashtable;
 import org.json.JSONArray;
 import org.json.JSONException;
 
+import com.licryle.veliby.Settings;
 import com.licryle.veliby.Util;
 
 import android.app.IntentService;
@@ -29,9 +30,11 @@ public class StationsInfoService extends IntentService {
   public static final int FAILURE_GENERIC = 8347;
   public static final int FAILURE_PARSE = 8348;
   public static final int FINISHED = 8349;
+  public static final int CONTRACT_ONLY = 8350;
 
   protected Hashtable<String, ResultReceiver> _mRequesters;
   protected Stations _mStations;
+  protected Contracts _mContracts;
 
   public StationsInfoService() {
     super("StationsInfoService");
@@ -68,11 +71,66 @@ public class StationsInfoService extends IntentService {
     }
   }
 
-  protected int _downloadStations(boolean bFullCycle, String sUrlFull,
-      String sUrlDynamic, File mStationsFile) {
+  protected void _loadContracts(File mContractsFile) {
+    if (_mContracts == null) {
+      _mContracts = Contracts.loadFromFile(mContractsFile);
+    }
+  }
+
+
+  private int _downloadContracts(String sUrlContracts) {
+    Log.i("StationsInfoService", "Entering _downloadContracts()");
+    try {
+      URL mUrl = new URL(sUrlContracts);
+      URLConnection mConnection = mUrl.openConnection();
+      mConnection.connect();
+
+      // For progress report
+      int fileLength = mConnection.getContentLength();
+
+      // download the file
+      InputStream mInput = new BufferedInputStream(mUrl.openStream());
+      ByteArrayOutputStream mOutput = new ByteArrayOutputStream();
+
+      byte aData[] = new byte[1024];
+      long lTotal = 0;
+      int iCount;
+      while ((iCount = mInput.read(aData)) != -1) {
+        lTotal += iCount;
+        // publishing the progress....
+        Bundle mResultData = new Bundle();
+
+        if (fileLength > 0) {
+          mResultData.putInt("progress", (int) (lTotal * 100 / fileLength));
+          _dispatchResults(UPDATE_PROGRESS, mResultData);
+        }
+
+        mOutput.write(aData, 0, iCount);
+      }
+
+      mOutput.flush();
+      mInput.close();
+
+      _parseContractsData(mOutput);
+      mOutput.close();
+    } catch (ConnectException e) {
+      e.printStackTrace();
+      return FAILURE_CONNECTION;
+    } catch (IOException e) {
+      e.printStackTrace();
+      return FAILURE_GENERIC;
+    } catch (Exception e) {
+      e.printStackTrace();
+      return FAILURE_PARSE;
+    }
+    return CONTRACT_ONLY;
+  }
+
+  protected int _downloadStations(boolean bFullCycle, Contract mContract) {
     Log.i("StationsInfoService", "Entering _downloadStations()");
     try {
-      String sUrl = bFullCycle ? sUrlFull : sUrlDynamic;
+      String sUrl = bFullCycle ? Settings.getURLDownloadFull(mContract) :
+          Settings.getURLDownloadDynamic(mContract);
 
       URL mUrl = new URL(sUrl);
       URLConnection mConnection = mUrl.openConnection();
@@ -95,27 +153,23 @@ public class StationsInfoService extends IntentService {
 
         if (fileLength > 0) {
           mResultData.putInt("progress", (int) (lTotal * 100 / fileLength));
+          _dispatchResults(UPDATE_PROGRESS, mResultData);
         }
 
-        _dispatchResults(UPDATE_PROGRESS, mResultData);
         mOutput.write(aData, 0, iCount);
       }
 
       mOutput.flush();
       mInput.close();
 
-      Bundle mResultData = new Bundle();
       if (bFullCycle) {
-        _parseFullData(mOutput);
+        _parseFullData(mOutput, mContract);
       } else {
         _parseDynamicData(mOutput);
       }
       mOutput.close();
 
-      // Send result to process asking, write in background
-      mResultData.putSerializable("stations", _mStations);
-      _dispatchResults(SUCCESS, mResultData);
-      _mStations.saveStationsInfo(mStationsFile);
+      return SUCCESS;
     } catch (ConnectException e) {
       e.printStackTrace();
       return FAILURE_CONNECTION;
@@ -126,7 +180,6 @@ public class StationsInfoService extends IntentService {
       e.printStackTrace();
       return FAILURE_PARSE;
     }
-    return FINISHED;
   }
 
   @Override
@@ -135,56 +188,114 @@ public class StationsInfoService extends IntentService {
 
     if (_mRequesters.size() == 0) return;
 
-    String sUrlFull = intent.getStringExtra("url_full");
-    String sUrlDynamic = intent.getStringExtra("url_dynamic");
     String sStationsFile = intent.getStringExtra("stations_file");
     File mStationsFile = new File(sStationsFile);
     int iDlStatic = intent.getIntExtra("dl_static", 1000);
     int iDlDynamic = intent.getIntExtra("dl_dynamic", 1000);
-    int iContract = intent.getIntExtra("contract_id", 0);
 
+    int iDlContracts = intent.getIntExtra("dl_contracts", 1000);
+    int iContract = intent.getIntExtra("contract_id", 0);
+    String sContractsUrl = intent.getStringExtra("contracts_url");
+    String sContractsFile = intent.getStringExtra("contracts_file");
+    File mContractsFile = new File(sContractsFile);
+
+    _loadContracts(mContractsFile);
     _loadStations(mStationsFile, iDlDynamic);
 
     boolean bStaticExpired = _mStations.isStaticExpired(iDlStatic);
     boolean bDynamicExpired = _mStations.isDynamicExpired(iDlDynamic);
 
+    int iResult;
+    boolean bExpiredContracts = _mContracts.isStaticExpired(iDlContracts);
+    if (bExpiredContracts) { // Download contracts if they are expired
+      iResult = _downloadContracts(sContractsUrl);
+    }
+
+    // check if we changed contract
     boolean bDiffContract = false;
     try {
-      bDiffContract = iContract != _mStations.entrySet().iterator().
-          next().getValue().getContract().getId();
-    } catch (Exception e) {}
+      bDiffContract = (_mStations.size() == 0) ||
+          (iContract != _mStations.entrySet().iterator().
+              next().getValue().getContract().getId());
+    } catch (Exception e) {
+      bDiffContract = true;
+    }
 
-    int iResult;
+    // If stations data is invalidated
     if (bStaticExpired || bDynamicExpired || bDiffContract) {
-      iResult = _downloadStations(bStaticExpired || bDiffContract, sUrlFull,
-          sUrlDynamic, mStationsFile);
+      Contract mContract = _mContracts.findContractById(iContract);
+      if (mContract == null) {
+        iResult = CONTRACT_ONLY;
+        _mStations = null;
+      } else {
+        iResult = _downloadStations(bStaticExpired || bDiffContract, mContract);
+      }
     } else {
       iResult = SUCCESS;
     }
 
     if ( (iResult == FAILURE_CONNECTION || iResult == FAILURE_GENERIC ||
-        iResult == FAILURE_PARSE) &&_mStations != null) {
+        iResult == FAILURE_PARSE) && _mStations != null) {
       // We send static info for reference
       _mStations.removeDynamicData();
     }
 
+    // Send result to process asking, write after, all in background
     Bundle mBundle = new Bundle();
     mBundle.putSerializable("stations", _mStations);
+    mBundle.putSerializable("contracts", _mContracts);
     _dispatchResults(iResult, mBundle);
+
+    if (iResult == CONTRACT_ONLY && bExpiredContracts) {
+      _mContracts.saveToFile(mContractsFile);
+    }
+    
+    if (iResult == SUCCESS &&
+        (bStaticExpired || bDynamicExpired || bDiffContract)) {
+      if (bExpiredContracts) {
+        _mContracts.saveToFile(mContractsFile);        
+      }
+
+      _mStations.saveStationsInfo(mStationsFile);
+    }
+
+    if (iResult == CONTRACT_ONLY || iResult == SUCCESS) {
+      _dispatchResults(FINISHED, mBundle);
+    }
 
     _mRequesters.clear();
     Log.i("StationsInfoService", "Leaving onHandleIntent()");
   }
 
-  protected void _parseFullData(ByteArrayOutputStream mInput)
+  private void _parseContractsData(ByteArrayOutputStream mInput)
       throws JSONException {
+    String sInput = new String(mInput.toByteArray());
+    JSONArray mJSon = new JSONArray(sInput);
+  
+    Contracts mNewContracts = new Contracts();
+    for (int i=0; i < mJSon.length(); i++) {
+      try {
+        Contract mContract = new Contract(mJSon.getJSONObject(i));
+        mNewContracts.put(mContract.getId(), mContract);
+      } catch (Exception e) {
+        Log.i("StationsInfoService", "1 station rejected, JSON invalid. " +
+            e.getMessage());
+      }
+    }
+    mNewContracts.setLastUpdate(Calendar.getInstance().getTime());
+
+    _mContracts = mNewContracts;
+  }
+
+  protected void _parseFullData(ByteArrayOutputStream mInput,
+      Contract mContract) throws JSONException {
     String sInput = new String(mInput.toByteArray());
     JSONArray mJSon = new JSONArray(sInput);
   
     Stations mNewStations = new Stations();
     for (int i=0; i < mJSon.length(); i++) {
       try {
-      	Station mStation = new Station(mJSon.getJSONObject(i));
+      	Station mStation = new Station(mContract, mJSon.getJSONObject(i));
       	mNewStations.put(mStation.getId(), mStation);
       } catch (Exception e) {
         Log.i("StationsInfoService", "1 station rejected, JSON invalid. " +
@@ -198,7 +309,8 @@ public class StationsInfoService extends IntentService {
 
   protected void _parseDynamicData(ByteArrayOutputStream mInput)
       throws Exception {
-  	if (mInput.size() % 6 != 0) throw new Exception("Not rounded dynamic data");
+  	if (mInput.size() % 5 != 0)
+  	  throw new Exception("Not rounded dynamic data");
 
   	byte aData[] = mInput.toByteArray();
   	int i = 0;
@@ -213,7 +325,7 @@ public class StationsInfoService extends IntentService {
       if (mStationToUp != null) {
         int iAvBikes      = (new Byte(aData[i++])).intValue();
         int iAvBikeStands = (new Byte(aData[i++])).intValue();
-        boolean bOpened   = (new Byte(aData[i++])).intValue() == 1;
+        boolean bOpened   = (iAvBikes > 0) || (iAvBikeStands > 0);
         
         mStationToUp.update(bOpened, iAvBikes, iAvBikeStands);
       }
