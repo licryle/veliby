@@ -5,7 +5,7 @@ require_once(PATH_PROVIDERS . 'class.DataProvider_Abstract.php');
 class DataProvider_JCDecaux extends DataProvider_Abstract {
   public function generateStationsUrl() {
     return 'https://api.jcdecaux.com/vls/v1/stations?contract=' .
-        $this->getContract()->getCity() .
+        $this->getContract()->getTag() .
         '&apiKey=718b4e0e0b1f01af842ff54c38bed00eaa63ce3c';
   }
 

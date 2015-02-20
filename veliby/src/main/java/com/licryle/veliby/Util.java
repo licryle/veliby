@@ -79,6 +79,8 @@ public abstract class Util {
     mCriteria.setAccuracy(Criteria.ACCURACY_FINE);
  
     String sProvider = mLocMgr.getBestProvider(mCriteria, true);
+    if (sProvider == null) return null;
+
     Location mLastLocation = mLocMgr.getLastKnownLocation(sProvider);
 
     if (mLastLocation == null) return null;

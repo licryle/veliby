@@ -19,26 +19,4 @@
         android:layout_marginTop="5dp"
         android:layout_marginBottom="5dp" />
 
-    <LinearLayout
-        android:id="@+id/infoview_row_qualities"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_horizontal" >
-
-      <ImageView
-          android:id="@+id/infoview_bankimg"
-          android:layout_width="wrap_content"
-          android:layout_height="wrap_content"
-          android:contentDescription="@string/infoview_bank"
-          android:src="@drawable/ic_coins_l" />
-
-      <ImageView
-          android:id="@+id/infoview_bonusimg"
-          android:layout_width="wrap_content"
-          android:layout_height="wrap_content"
-          android:contentDescription="@string/infoview_bonus"
-          android:src="@drawable/ic_input_add" />
-    </LinearLayout>
-
 </LinearLayout>

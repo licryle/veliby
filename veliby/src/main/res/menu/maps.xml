@@ -12,7 +12,7 @@
         android:id="@+id/action_mode"
         android:orderInCategory="100"
         veliby:showAsAction="always"
-        android:icon="@drawable/ic_menu_upload"
+        android:icon="@drawable/bikes"
         android:title="@string/action_mode"/>
 
 </menu>

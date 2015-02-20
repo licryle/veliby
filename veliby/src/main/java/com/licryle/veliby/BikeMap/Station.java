@@ -37,14 +37,14 @@ public class Station implements Serializable {
 	public Station(Contract mContract, JSONObject mStation)
 	    throws JSONException {
     _mContract = mContract;
-		_iNumber = mStation.getInt("id");
-		_iId = _mContract.getId() * 1000 + _iNumber;
+		_iNumber = mStation.getInt("number");
+		_iId = Station.generateId(_mContract.getId(), _iNumber);
 
 		_sName = mStation.getString("name");
-		_sAddress = ""; //mStation.getString("address");
+		_sAddress = mStation.getString("address");
 
-		_dLat = mStation.getDouble("lat") / 1E6;
-		_dLng = mStation.getDouble("lng") / 1E6;
+		_dLat = mStation.getJSONObject("position").getDouble("lat");
+		_dLng = mStation.getJSONObject("position").getDouble("lng");
 
 		_bBanking = false; // mStation.getBoolean("banking");
 		_bBonus = false; //mStation.getBoolean("bonus");
@@ -125,10 +125,14 @@ public class Station implements Serializable {
     _bStaticOnly = true;
   }
 
-	public void update(boolean bStatus, int iAvBikes, int iAvBikeStands) {
-		_bOpened = bStatus;
-		_iAvBikes = iAvBikes;
-		_iAvBikeStands = iAvBikeStands;
-		_bStaticOnly = false;
-	}
+  public void update(boolean bStatus, int iAvBikes, int iAvBikeStands) {
+    _bOpened = bStatus;
+    _iAvBikes = iAvBikes;
+    _iAvBikeStands = iAvBikeStands;
+    _bStaticOnly = false;
+  }
+
+  public static int generateId(int iContractId, int iStationNumber) {
+    return iContractId * 1000000 + iStationNumber;
+  }
 }

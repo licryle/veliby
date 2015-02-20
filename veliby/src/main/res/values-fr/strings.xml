@@ -34,7 +34,8 @@ Enfin, 2 boutons vous permettent de contrôler l\'app:</string>
     <string name="action_reload_start">Mise à jour en cours</string>
     <string name="action_reload_datarecent">Données déjà à jour</string>
     <string name="action_reload_complete">Mise à jour terminée</string>
-    <string name="action_reload_failure">Mise à jour échouée: veuillez vérifier votre connection internet</string>
+    <string name="action_reload_failure">Mise à jour échouée: veuillez vérifier votre connection Internet</string>
+    <string name="action_reload_contractfailure">Mise à jour des contracts échouée: veuillez vérifier votre connection Internet</string>
     
     <string name="action_faved">Station maintenant favorite, retrouvez la sur un widget</string>
     <string name="action_unfaved">Station retirée de vos favoris</string>
@@ -43,11 +44,7 @@ Enfin, 2 boutons vous permettent de contrôler l\'app:</string>
 
     <string name="refresh">Mettre à jour</string>
     <string name="refresh_date">Jamais mis à jour</string>
-    
-    <string name="infoview_bonus">Bonus de 15 minutes ajouté à votre compte
-        lors du dépot d\'un vélo dans cette station!</string>
-    <string name="infoview_bank">Station disposant d\'une borne achat de 
-        ticket/rechargement de forfaits.</string>
+
     <string name="infoview_stationclosed">Station fermée!</string>
     <string name="infoview_noinfo">Information indisponible</string>
     <string name="infoview_favorite">Station favorite</string>
@@ -86,4 +83,6 @@ Enfin, 2 boutons vous permettent de contrôler l\'app:</string>
 
     <string name="menu_open">Ouvrir Menu</string>
     <string name="menu_close">Fermer Menu</string>
+    <string name="menu_no_city">Pas de ville téléchargée: verifiez votre connexion internet et pressez le bouton recharger.</string>
+    <string name="action_reload_nomap">Le plan n\'est pas chargé, veuillez réessayer dans quelques secondes ou redémarrer l\'application</string>
 </resources>

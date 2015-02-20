@@ -1,0 +1,78 @@
+import groovy.swing.SwingBuilder
+
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion 21
+    buildToolsVersion "21.1.2"
+    defaultConfig {
+        applicationId "com.licryle.veliby"
+        minSdkVersion 9
+        targetSdkVersion 21
+    }
+    signingConfigs {
+        release {
+            storeFile file("/home/licryle/com_licryle.keystore")
+            storePassword "" // defined below
+            keyAlias "com_licryle"
+            keyPassword "" // defined below
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+            signingConfig signingConfigs.release
+        }
+    }
+    productFlavors {
+    }
+}
+
+gradle.taskGraph.whenReady { taskGraph ->
+    if(taskGraph.hasTask(':veliby:assembleRelease')) {
+        def password = ""
+
+        if (System.console() == null) {
+            new SwingBuilder().edt {
+                dialog(modal: true,
+                        title: "Enter password",
+                        alwaysOnTop: true,
+                        resizable: false,
+                        locationRelativeTo: null,
+                        pack: true,
+                        show: true
+                ) {
+                    vbox {
+                        label(text: "Enter password: ")
+                        input = passwordField()
+                        button(defaultButton: true,
+                                text: 'OK',
+                                actionPerformed: {
+                                    password =  new String(input.password);
+                                    dispose();
+                                })
+                    }
+                }
+            }
+        } else {
+            password = System.console().readPassword("\nEnter password: ")
+            password = new String(password)
+        }
+
+        if (password.size() <= 0) {
+            throw new InvalidUserDataException("Empty password")
+        }
+
+        android.signingConfigs.release.storePassword = password
+        android.signingConfigs.release.keyPassword = password
+    }
+}
+
+
+dependencies {
+    compile 'com.google.android.gms:play-services-maps:+'
+    compile 'com.android.support:appcompat-v7:+'
+    compile project(':libs:Google-Directions-Android')
+    //wearApp project(':velibywear')
+}

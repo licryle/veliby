@@ -13,7 +13,7 @@ class Station {
       $iLat, $iLon) {
     $this->_iNumber = intval($iIdLocal);
     $this->_mContract = $mContract;
-    $this->_iId = 1000 * $this->_mContract->getId() + $this->_iNumber;
+    $this->_iId = 1000000 * $this->_mContract->getId() + $this->_iNumber;
 
     $this->_sName = $sName;
     $this->_sAddress = $sAddress;
@@ -31,7 +31,6 @@ class Station {
 
   public function getArray() {
     $aArray = Array();
-    $aArray['id'] = $this->_iId;
     $aArray['number'] = $this->_iNumber;
     $aArray['contractId'] = $this->_mContract->getId();
 

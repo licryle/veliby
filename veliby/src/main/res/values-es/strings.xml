@@ -35,6 +35,7 @@
     <string name="action_reload_datarecent">Datos ya actualizados</string>
     <string name="action_reload_complete">Actualización completa</string>
     <string name="action_reload_failure">Actualización fallada: por favor verifica tu conexión al Internet</string>
+    <string name="action_reload_contractfailure">Actualización de los contractos fallada: por favor verifica tu conexión al Internet</string>
     
     <string name="action_faved">Estación ahora favorita, encuentrala en un widget</string>
     <string name="action_unfaved">Estación quitada de la lista de favoritas</string>
@@ -43,10 +44,7 @@
 
     <string name="refresh">Actualizar</string>
     <string name="refresh_date">Nunca actualizado</string>
-    
-    <string name="infoview_bonus">Bonus de 15 minutos añadido a tu cuenta
-        cuando entregas tu bici en esta estación!</string>
-    <string name="infoview_bank">Estación que te permite comprar/recargar abonos.</string>
+
     <string name="infoview_stationclosed">Estación cerrada!</string>
     <string name="infoview_noinfo">Información indisponible</string>
     <string name="infoview_favorite">Estación favorita</string>
@@ -85,4 +83,6 @@
 
     <string name="menu_open">Abrir Menu</string>
     <string name="menu_close">Cerrar Menu</string>
+    <string name="menu_no_city">No ciudad descargada: por favor verifica tu conexión internet y pincha recargar.</string>
+    <string name="action_reload_nomap">El mapa no está cargado, por favor espera unos segundos antes de intentar de nuevo, o inicia de nuevo la aplicación</string>
 </resources>

@@ -7,7 +7,7 @@ import com.licryle.veliby.MapsActivity;
 import com.licryle.veliby.R;
 import com.licryle.veliby.Settings;
 import com.licryle.veliby.Util;
-import com.licryle.veliby.BikeMap.StationsInfoService;
+import com.licryle.veliby.StationsInfoService;
 import com.licryle.veliby.BikeMap.Station;
 import com.licryle.veliby.BikeMap.Stations;
 
@@ -259,7 +259,7 @@ public class Provider extends AppWidgetProvider {
       super.onReceiveResult(resultCode, resultData);
 
       switch (resultCode) {
-        case StationsInfoService.SUCCESS:
+        case StationsInfoService.SUCCESS_STATIONS:
           Log.i("Provider", "onReceiveResult SUCCESS");
           // date doesn't matter since it was just generated
           Stations mStations = (Stations)resultData.getSerializable("stations");
@@ -268,9 +268,9 @@ public class Provider extends AppWidgetProvider {
           _bDownloading = false;
         break;
 
-        case StationsInfoService.FAILURE_CONNECTION:
-        case StationsInfoService.FAILURE_GENERIC:
-        case StationsInfoService.FAILURE_PARSE:
+        case StationsInfoService.FAILURE_STATIONS_CONNECTION:
+        case StationsInfoService.FAILURE_STATIONS_GENERIC:
+        case StationsInfoService.FAILURE_STATIONS_PARSE:
           Log.i("Provider", "onReceiveResult FAILURE_Xxxxx");
           _updateViews(null);
           _bDownloading = false;

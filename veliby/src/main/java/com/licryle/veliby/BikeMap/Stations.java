@@ -72,7 +72,7 @@ public class Stations extends Hashtable<Integer, Station> {
       mFile.delete();
       e.printStackTrace();
     } catch (IOException e) {
-      // TODO Auto-generated catch block
+      mFile.delete();
       e.printStackTrace();
     } catch (ClassNotFoundException e) {
       // We changed version, let's delete that file
@@ -87,7 +87,7 @@ public class Stations extends Hashtable<Integer, Station> {
     return new Stations();
   }
 
-  public boolean saveStationsInfo(File mFile) {
+  public boolean saveToFile(File mFile) {
     mFile.delete();
     FileOutputStream mOutput;
     try {

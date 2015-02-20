@@ -9,13 +9,13 @@ class Contract {
   protected $_sCity;
 
   protected $_aPos;
-  protected $_iRadius;
+  protected $_iZoom;
 
   protected $_sProvider;
   protected $_sUrl;
 
   public function __construct($iId, $sTag, $sName, $sCity, $iLat, $iLng,
-      $iRadius, $sProvider, $sUrl) {
+      $iZoom, $sProvider, $sUrl) {
     $this->_iId = intval($iId);
     $this->_sTag = $sTag;
 
@@ -24,7 +24,7 @@ class Contract {
 
     $this->_aPos = array('lat' => floatval($iLat),
         'lng' => floatval($iLng));
-    $this->_iRadius = intval($iRadius);
+    $this->_iZoom = intval($iZoom);
     $this->_sProvider = $sProvider;
     $this->_sUrl = $sUrl;
   }
@@ -34,21 +34,18 @@ class Contract {
   public function getName() { return $this->_sName; }
   public function getCity() { return $this->_sCity; }
   public function getPosition() { return $this->_aPos; }
-  public function getRadius() { return $this->_iRadius; }
+  public function getZoom() { return $this->_iZoom; }
   public function getProvider() { return $this->_sProvider; }
   public function getUrl() { return $this->_sUrl; }
 
   public function getArray() {
     $aArray = Array();
     $aArray['id'] = $this->_iId;
-    $aArray['tag'] = $this->_sTag;
     $aArray['name'] = $this->_sName;
     $aArray['city'] = $this->_sCity;
 
     $aArray['position'] = $this->_aPos;
-    $aArray['radius'] = $this->_iRadius;
-    $aArray['provider'] = $this->_sProvider;
-    $aArray['url'] = $this->_sUrl;
+    $aArray['zoom'] = $this->_iZoom;
 
     return $aArray;
   }

@@ -1,18 +1,18 @@
 package com.licryle.veliby;
 
+import android.annotation.SuppressLint;
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.os.Environment;
+
+import com.google.android.gms.maps.model.PolylineOptions;
+import com.licryle.veliby.BikeMap.Contract;
+
 import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.Map;
-
-import com.google.android.gms.maps.model.PolylineOptions;
-import com.licryle.veliby.BikeMap.Contract;
-
-import android.annotation.SuppressLint;
-import android.content.Context;
-import android.content.SharedPreferences;
-import android.os.Environment;
 
 public class Settings implements Serializable {
   /**
@@ -29,9 +29,9 @@ public class Settings implements Serializable {
   protected final static int _iWidgetUpdateFrequency = 10;
 
   protected final static String URL_CONTRACTS =
-      "http://api.citybik.es/networks.json";
+      "http://veliby.berliat.fr/v3/";
   protected final static String URL_DYNAMIC =
-      "http://veliby.berliat.fr/v2/?c=%d";
+      "http://veliby.berliat.fr/v3/?c=%d&f=%d";
 
   protected final static Hashtable<Integer, Integer> _mBikeResources = 
   new Hashtable<Integer, Integer>() {
@@ -123,7 +123,11 @@ catch (NameNotFoundException e) {}*/
   }
 
   public int getCurrentContractId() {
-    return _mPrefs.getInt("current_contract", 1);    
+    return _mPrefs.getInt("current_contract", 0);
+  }
+
+  public boolean isSetCurrentContractId() {
+    return getCurrentContractId() != 0;
   }
 
   public void setCurrentContract(Contract mContract) {
@@ -132,11 +136,12 @@ catch (NameNotFoundException e) {}*/
 
   @SuppressLint("DefaultLocale")
   public static String getURLDownloadDynamic(Contract mContract) {
-    return String.format(URL_DYNAMIC, mContract.getId());
+    return String.format(URL_DYNAMIC, mContract.getId(), 0);
   }
 
+  @SuppressLint("DefaultLocale")
   public static String getURLDownloadFull(Contract mContract) {
-    return mContract.getUrl();
+      return String.format(URL_DYNAMIC, mContract.getId(), 1);
   }
 
   public static String getURLContracts() {

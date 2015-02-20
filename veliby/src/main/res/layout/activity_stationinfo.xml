@@ -71,7 +71,7 @@
 		            android:layout_height="wrap_content"
 		            android:layout_gravity="center_vertical"
 		            android:contentDescription="@string/action_mode_find"
-		            android:src="@drawable/ic_menu_upload" />
+		            android:src="@drawable/bikes" />
 		
 		        <TextView
 		            android:id="@+id/infoview_bikes"
@@ -95,7 +95,7 @@
 		            android:layout_height="wrap_content"
 		            android:layout_gravity="center_vertical"
 		            android:contentDescription="@string/action_mode_return"
-		            android:src="@drawable/ic_menu_goto" />
+		            android:src="@drawable/parking" />
 		
 		        <TextView
 		            android:id="@+id/infoview_stands"

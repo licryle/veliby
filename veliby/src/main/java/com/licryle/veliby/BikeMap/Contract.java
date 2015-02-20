@@ -1,12 +1,12 @@
 package com.licryle.veliby.BikeMap;
 
-import java.io.Serializable;
-import java.util.Comparator;
+import com.google.android.gms.maps.model.LatLng;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import com.google.android.gms.maps.model.LatLng;
+import java.io.Serializable;
+import java.util.Comparator;
 
 public class Contract implements Serializable {
   /**
@@ -16,12 +16,10 @@ public class Contract implements Serializable {
 
   protected final int _iId;
   protected final String _sName;
-  protected final String _sTag;
   protected final String _sCity;
   protected Double _dLng;
   protected Double _dLat;
-  protected final int _iRadius;
-  protected final String _sUrl;
+  protected final int _iZoom;
 
   public class CityNameComparator implements Comparator<Contract> {
       @Override
@@ -34,21 +32,17 @@ public class Contract implements Serializable {
       throws JSONException {
     _iId = mContract.getInt("id");
     _sName = mContract.getString("name");
-    _sTag = mContract.getString("tag");
     _sCity = mContract.getString("city");
 
-    _dLat = mContract.getDouble("lat") / 1E6;
-    _dLng = mContract.getDouble("lng") / 1E6;
+    _dLat = mContract.getJSONObject("position").getDouble("lat");
+    _dLng = mContract.getJSONObject("position").getDouble("lng");
 
-    _sUrl = mContract.getString("url");
-    _iRadius = mContract.getInt("radius");
+    _iZoom = mContract.getInt("zoom");
   }
 
   public int getId() { return _iId; }
   public String getName() { return _sName; }
-  public String getTag() { return _sTag; }
   public String getCity() { return _sCity; }
   public LatLng getPosition() { return new LatLng(_dLat, _dLng); }
-  public String getUrl() { return _sUrl; }
-  public int getRadius() { return _iRadius; }
+  public int getZoom() { return _iZoom; }
 }
