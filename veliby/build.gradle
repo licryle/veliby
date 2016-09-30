@@ -4,7 +4,7 @@ apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion 21
-    buildToolsVersion "21.1.2"
+    buildToolsVersion "21"
     defaultConfig {
         applicationId "com.licryle.veliby"
         minSdkVersion 9
@@ -71,8 +71,11 @@ gradle.taskGraph.whenReady { taskGraph ->
 
 
 dependencies {
-    compile 'com.google.android.gms:play-services-maps:+'
-    compile 'com.android.support:appcompat-v7:+'
-    compile project(':libs:Google-Directions-Android')
+    compile 'com.google.android.gms:play-services-maps:9.6.0'
+    compile 'com.google.android.gms:play-services-analytics:9.6.0'
     //wearApp project(':velibywear')
+    compile 'com.android.support:support-v4:21.0.3'
+    compile 'com.android.support:appcompat-v7:21.0.3'
+
+    compile project(':libs:Google-Directions-Android')
 }
