@@ -31,8 +31,8 @@ class DataProvider_JCDecaux extends DataProvider_Abstract {
 
     $aAllStations = Array();
     foreach ($aStations as $key => $aStation) {
-      $mStation = $this->parseStation($aStation);
-      $aAllStations[$mStation->getId()] = $mStation;
+      $mPOI = $this->parseStation($aStation);
+      $aAllStations[$mPOI->getId()] = $mPOI;
     }
 
     return $aAllStations;

@@ -6,13 +6,14 @@ import android.content.SharedPreferences;
 import android.os.Environment;
 
 import com.google.android.gms.maps.model.PolylineOptions;
-import com.licryle.veliby.BikeMap.Contract;
 
 import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.Map;
+
+import com.licryle.POICityMap.datastructure.City;
 
 public class Settings implements Serializable {
   /**
@@ -76,7 +77,16 @@ catch (NameNotFoundException e) {}*/
     _mPrefs.edit().putBoolean("previously_started", true).commit();
   }
 
-  protected boolean isStationFavorite(int iStationId) {
+
+  public boolean isBikeFindMode() {
+    return _mPrefs.getBoolean("mode_find_bike", true);
+  }
+
+  public void setBikeFindMode(boolean bBikeMode) {
+    _mPrefs.edit().putBoolean("mode_find_bike", bBikeMode).commit();
+  }
+
+  public boolean isStationFavorite(int iStationId) {
     return _mPrefs.getBoolean("favstation_" + iStationId, false);
   }
 
@@ -130,17 +140,17 @@ catch (NameNotFoundException e) {}*/
     return getCurrentContractId() != 0;
   }
 
-  public void setCurrentContract(Contract mContract) {
+  public void setCurrentContract(City mContract) {
     _mPrefs.edit().putInt("current_contract", mContract.getId()).commit();
   }
 
   @SuppressLint("DefaultLocale")
-  public static String getURLDownloadDynamic(Contract mContract) {
+  public static String getURLDownloadDynamic(City mContract) {
     return String.format(URL_DYNAMIC, mContract.getId(), 0);
   }
 
   @SuppressLint("DefaultLocale")
-  public static String getURLDownloadFull(Contract mContract) {
+  public static String getURLDownloadFull(City mContract) {
       return String.format(URL_DYNAMIC, mContract.getId(), 1);
   }
 
@@ -148,17 +158,17 @@ catch (NameNotFoundException e) {}*/
     return URL_CONTRACTS;
   }
 
-  public static File getVelibyPath() {
+  public static File getAppPath() {
     return new File(Environment.getExternalStorageDirectory().getPath() +
         "/Veliby/");
   }
 
   public static File getStationsFile() {
-    return new File(getVelibyPath().getAbsolutePath() + "/stations.comlete");
+    return new File(getAppPath().getAbsolutePath() + "/stations.comlete");
   }
 
   public static File getContractsFile() {
-    return new File(getVelibyPath().getAbsolutePath() + "/contracts");
+    return new File(getAppPath().getAbsolutePath() + "/contracts");
   }
 
   public boolean isFavStationsOnly() {

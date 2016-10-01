@@ -1,2 +1,3 @@
 include ':veliby'
-include ':libs:Google-Directions-Android'
+include ':libraries:POICityMap'
+include ':libraries:Google-Directions-Android'

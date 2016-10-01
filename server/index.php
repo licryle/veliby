@@ -18,26 +18,26 @@ $sFilePath_Contracts = PATH_TMP . 'contracts';
 $sUrl_Contracts = "http://api.citybik.es/networks.json";
 $iDataTimeout_Contracts = 36000; // seconds
 
-$mContracts = new Contracts();
+$mCityList = new Contracts();
 $iContract = intval(@$_GET['c']);
 if (! $iContract) {
-  die(json_encode($mContracts->getArray()));
+  die(json_encode($mCityList->getArray()));
 }
 
-$mContract = $mContracts->getContractById($iContract);
-if (!$mContract) {
+$mCity = $mCityList->getContractById($iContract);
+if (!$mCity) {
   // Quit if not a valid contract
   die('CONTRACT_BAD_OR_CANNOT_LOAD');
 }
 
 $bFull = boolval(@$_GET['f']);
-if (!$mContract->updateDynamicStations($sFilePath_Stations,
+if (!$mCity->updateDynamicStations($sFilePath_Stations,
     $iDataTimeout_Stations)) {
   // Quit if we can't update stations for some reason
   die('STATIONS_CANNOT_UPDATE');
 }
 
-$sFilePath = $mContract->buildStationsFilePath($sFilePath_Stations, $bFull);
+$sFilePath = $mCity->buildStationsFilePath($sFilePath_Stations, $bFull);
 $mFile = FileUtils::openLockedFileTimeOut($sFilePath, 'rb', 500, true);
 if (!$mFile) {
   // Quit if not a valid contract

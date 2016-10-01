@@ -382,8 +382,8 @@ class Contracts {
   public function getArray() {
     $aContracts = [];
 
-    foreach ($this->_aContracts AS $mContract) {
-      $aContracts[] = $mContract->getArray();
+    foreach ($this->_aContracts AS $mCity) {
+      $aContracts[] = $mCity->getArray();
     }
 
     return $aContracts;

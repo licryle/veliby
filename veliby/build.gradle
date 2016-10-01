@@ -3,8 +3,8 @@ import groovy.swing.SwingBuilder
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 21
-    buildToolsVersion "21"
+    compileSdkVersion 23
+    buildToolsVersion '21.1.2'
     defaultConfig {
         applicationId "com.licryle.veliby"
         minSdkVersion 9
@@ -27,10 +27,14 @@ android {
     }
     productFlavors {
     }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_7
+        targetCompatibility JavaVersion.VERSION_1_7
+    }
 }
 
 gradle.taskGraph.whenReady { taskGraph ->
-    if(taskGraph.hasTask(':veliby:assembleRelease')) {
+    if (taskGraph.hasTask(':veliby:assembleRelease')) {
         def password = ""
 
         if (System.console() == null) {
@@ -49,7 +53,7 @@ gradle.taskGraph.whenReady { taskGraph ->
                         button(defaultButton: true,
                                 text: 'OK',
                                 actionPerformed: {
-                                    password =  new String(input.password);
+                                    password = new String(input.password);
                                     dispose();
                                 })
                     }
@@ -71,11 +75,9 @@ gradle.taskGraph.whenReady { taskGraph ->
 
 
 dependencies {
-    compile 'com.google.android.gms:play-services-maps:9.6.0'
-    compile 'com.google.android.gms:play-services-analytics:9.6.0'
-    //wearApp project(':velibywear')
-    compile 'com.android.support:support-v4:21.0.3'
-    compile 'com.android.support:appcompat-v7:21.0.3'
-
-    compile project(':libs:Google-Directions-Android')
+    compile 'com.google.android.gms:play-services-analytics:+'
+    compile 'com.google.android.gms:play-services-maps:+'
+    compile 'com.android.support:appcompat-v7:+'
+    compile project(':libraries:POICityMap')
+    compile project(':libraries:Google-Directions-Android')
 }

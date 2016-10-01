@@ -30,8 +30,8 @@ class DataProvider_Alta extends DataProvider_Abstract {
     $aAllStations = Array();
     foreach ($aStations['stationBeanList'] as $key => $aStation) {
       if ($aStation['testStation'] == 'true') continue;
-      $mStation = $this->parseStation($aStation);
-      $aAllStations[$mStation->getId()] = $mStation;
+      $mPOI = $this->parseStation($aStation);
+      $aAllStations[$mPOI->getId()] = $mPOI;
     }
 
     return $aAllStations;

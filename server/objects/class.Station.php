@@ -9,10 +9,10 @@ class Station {
   protected $_sAddress;
   protected $_aPos;
 
-  public function __construct($mContract, $iIdLocal, $sName, $sAddress, 
+  public function __construct($mCity, $iIdLocal, $sName, $sAddress,
       $iLat, $iLon) {
     $this->_iNumber = intval($iIdLocal);
-    $this->_mContract = $mContract;
+    $this->_mContract = $mCity;
     $this->_iId = 1000000 * $this->_mContract->getId() + $this->_iNumber;
 
     $this->_sName = $sName;

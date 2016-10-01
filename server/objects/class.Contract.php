@@ -100,9 +100,9 @@ class Contract {
         } else {
           $aAllStations = [];
 
-          foreach ($aStations as $key => $mStation) {
-            fwrite($mDynamicFile, $mStation->getMinimizedDynamic());
-            $aAllStations[] = $mStation->getArray();
+          foreach ($aStations as $key => $mPOI) {
+            fwrite($mDynamicFile, $mPOI->getMinimizedDynamic());
+            $aAllStations[] = $mPOI->getArray();
           }
 
           fwrite($mFullFile, json_encode($aAllStations));

@@ -3,8 +3,8 @@
 abstract class DataProvider_Abstract {
   protected $_mContract = null;
 
-  public function __construct(Contract $mContract) {
-  	$this->_mContract = $mContract;
+  public function __construct(Contract $mCity) {
+  	$this->_mContract = $mCity;
   }
 
   protected function getContract() { return $this->_mContract; }

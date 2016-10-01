@@ -7,9 +7,9 @@ class DynamicStation extends Station {
   protected $_iAvBikeStands;
   protected $_iLastUpdate;
 
-  function __construct($mContract, $iIdLocal, $sName, $sAddress,
+  function __construct($mCity, $iIdLocal, $sName, $sAddress,
       $iLat, $iLon, $iAvBikes, $iAvBikeStands, $iLastUpdate) {
-    parent::__construct($mContract, $iIdLocal, $sName, $sAddress,
+    parent::__construct($mCity, $iIdLocal, $sName, $sAddress,
       $iLat, $iLon);
 
     $this->_iAvBikes = intval($iAvBikes);
